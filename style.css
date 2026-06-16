@@ -1,0 +1,546 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400&display=swap');
+
+html {
+    scroll-behavior: smooth;
+    scroll-snap-type: y mandatory;
+    overflow-y: scroll;
+    height: 100%;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+    display: none;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000;
+    height: 100%;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    overflow-x: hidden;
+}
+
+/* --- VIDEO BACKGROUND --- */
+.video-bg-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: -1;
+}
+
+.bg-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Base styles for both background photos */
+.bg-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Shows the whole image, no zoom */
+    background-color: #000; /* Fills any gaps with black */
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* On Desktop: Show desktop, Hide mobile */
+@media (min-width: 769px) {
+    .desktop-photo { display: block; }
+    .mobile-photo { display: none; }
+}
+
+/* On Mobile: Show mobile, Hide desktop */
+@media (max-width: 768px) {
+    .desktop-photo { display: none; }
+    .mobile-photo { display: block; }
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.desktop-video { display: block; }
+.mobile-video { display: none; }
+
+/* --- HEADER AND NAVIGATION --- */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100px;
+    padding: 0 5%;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.logo-placeholder {
+    flex: 1;
+}
+
+.top-nav-links {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+.top-nav-links a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.3s ease;
+}
+
+.top-nav-links a:hover {
+    color: #ffcc00;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.lang-switcher {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.lang-link {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.lang-link.active, .lang-link:hover {
+    color: #ffffff;
+}
+
+.lang-link:focus-visible {
+    outline: 1px solid rgba(255, 204, 0, 0.8);
+    outline-offset: 2px;
+}
+
+.btn-portal {
+    background-color: #ffcc00;
+    color: #000;
+    padding: 8px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-left: 10px;
+    transition: 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-portal:hover {
+    background-color: #e6b800;
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+/* --- GENERAL SECTIONS --- */
+.hero-section, .content-section {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    padding: 100px 5%;
+}
+
+.hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+}
+
+.hero-title {
+    font-weight: 300;
+    font-size: 24px;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.divider-line {
+    width: 150px; 
+    height: 0.5px;
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+.cta-button, .btn-primary {
+    background: none;
+    color: white;
+    border: 1px solid white;
+    width: 240px; 
+    height: 45px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.4s ease;
+}
+
+.cta-button:hover, .btn-primary:hover {
+    background: white;
+    color: black;
+}
+
+.content-section { background-color: #000; }
+.grey-bg { background-color: #0a0a0a; }
+
+.section-container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    margin-bottom: 50px;
+    text-align: center;
+}
+
+.about-content p {
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.6;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* --- LOCATION & MAP --- */
+.location-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    width: 100%;
+}
+
+.location-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.location-box p {
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.8;
+    text-align: center;
+}
+
+.center-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 30px;
+}
+
+.map-box { width: 100%; }
+
+/* --- CALCULATOR --- */
+.calc-slide-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #121212;
+    padding: 40px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    text-align: left;
+}
+
+.calc-form-group { margin-bottom: 25px; }
+.calc-form-group label { display: block; margin-bottom: 10px; color: #bbb; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+.calc-form-group select { width: 100%; padding: 15px; background: #000; color: #fff; border: 1px solid #444; border-radius: 5px; font-size: 16px; outline: none; transition: border-color 0.3s; }
+.calc-form-group select:focus { border-color: #ffcc00; }
+
+.calc-result-box { margin-top: 35px; padding: 25px; background: #1a1a1a; border-radius: 5px; border: 1px dashed #444; text-align: center; }
+.calc-result-box p { font-size: 14px; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.calc-result-box h3 { font-size: 36px; color: #ffcc00; margin: 0; }
+
+/* --- COPART DEAL OF THE DAY --- */
+.cotd-container {
+    display: flex;
+    flex-direction: column;
+    background: #121212;
+    border-radius: 8px;
+    border: 1px solid #333;
+    overflow: hidden;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.cotd-image {
+    position: relative;
+    width: 100%;
+    height: 250px;
+}
+
+.cotd-image img { width: 100%; height: 100%; object-fit: cover; }
+
+.cotd-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: #ffcc00;
+    color: #000;
+    padding: 5px 12px;
+    font-weight: bold;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 12px;
+}
+
+.cotd-details {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    text-align: left;
+}
+
+.cotd-details h3 { color: #ffffff; font-size: 24px; margin-bottom: 10px; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
+.cotd-specs p { color: #ccc; font-size: 14px; margin-bottom: 8px; }
+.cotd-specs strong { color: #888; text-transform: uppercase; letter-spacing: 1px; font-size: 12px; margin-right: 5px; }
+
+.cotd-price-box { background: #1a1a1a; padding: 15px; border-left: 4px solid #ffcc00; margin-top: 10px; }
+.cotd-price-box p { font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 5px; letter-spacing: 1px; }
+.cotd-price-box h4 { font-size: 28px; color: #ffcc00; font-weight: 400; }
+.cotd-btn { margin-top: 15px; width: 100%; }
+
+/* --- INQUIRY FORM --- */
+.inquiry-form-card {
+    background: #0a0a0a;
+    max-width: 750px;
+    margin: 0 auto;
+    padding: 40px;
+    border-radius: 8px;
+    border: 1px solid #222;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    text-align: left;
+}
+
+.form-header { text-align: center; margin-bottom: 30px; }
+.form-header h2 { color: #ffcc00; font-size: 28px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+.form-header p { color: #888; font-size: 14px; }
+
+.mai-inquiry-form .form-group { margin-bottom: 20px; }
+.mai-inquiry-form label { display: block; color: #ccc; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+.mai-inquiry-form input,
+.mai-inquiry-form select,
+.mai-inquiry-form textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #333;
+    border-radius: 5px;
+    background: #111;
+    font-size: 14px;
+    color: #fff;
+    transition: 0.3s;
+}
+
+.mai-inquiry-form input:focus,
+.mai-inquiry-form select:focus,
+.mai-inquiry-form textarea:focus {
+    border-color: #ffcc00;
+    outline: none;
+    background: #1a1a1a;
+}
+
+.form-submit-btn {
+    width: 100%;
+    background: transparent;
+    color: #ffcc00;
+    border: 1px solid #ffcc00;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 10px;
+    border-radius: 5px;
+}
+
+.form-submit-btn:hover {
+    background: #ffcc00;
+    color: #000;
+}
+
+/* ========================================= */
+/* RESPONSIVE LAYOUTS & MOBILE UI CLEANUP    */
+/* ========================================= */
+
+/* Hide links on medium to small screens to prevent overlap */
+@media (max-width: 992px) {
+    .top-nav-links {
+        display: none !important;
+    }
+}
+
+/* Desktop Only Deal of the Day adjustment */
+@media (min-width: 768px) {
+    .cotd-container {
+        flex-direction: row;
+        height: 400px;
+    }
+    .cotd-image { width: 50%; height: 100%; }
+    .cotd-details { width: 50%; justify-content: center; padding: 40px; }
+    .cotd-btn { width: auto; }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 767px) {
+    .hide-mobile { display: none !important; }
+    
+    body, html {
+        overflow-x: hidden;
+        position: relative;
+        width: 100%;
+    }
+    
+    html { scroll-snap-type: y proximity; }
+
+    /* Video Toggles */
+    .desktop-video { display: none !important; }
+    .mobile-video { display: block !important; }
+
+    /* Force sections to respect screen width */
+    .content-section {
+        padding: 60px 10px !important;
+        width: 100vw;
+        box-sizing: border-box;
+    }
+
+    .section-container {
+        width: 100% !important;
+        padding: 0 10px !important;
+        margin: 0 auto;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* FIX INQUIRY FORM BOX */
+    .inquiry-form-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 20px 15px !important;
+        margin: 0 !important;
+        box-sizing: border-box;
+        border-left: none;
+        border-right: none;
+        border-radius: 5px;
+    }
+
+    /* FORCE ALL INPUT GROUPS TO BE 100% WIDTH */
+    .mai-inquiry-form div[style*="display: flex"] { display: block !important; }
+    
+    .mai-inquiry-form .form-group {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        margin-bottom: 15px !important;
+    }
+
+    .mai-inquiry-form input, 
+    .mai-inquiry-form select, 
+    .mai-inquiry-form textarea {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .form-header h2 {
+        font-size: 22px !important;
+    }
+
+    /* Calculator Cleanup */
+    .calc-slide-container {
+        width: 100% !important;
+        padding: 25px 15px !important;
+        box-sizing: border-box;
+    }
+}
+
+/* Styling the input field itself */
+#bidPrice {
+    width: 100%;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.05); /* Subtle dark transparent background */
+    border: 1px solid rgba(255, 255, 255, 0.2);  /* Thin, muted border */
+    border-radius: 8px;                          /* Slightly rounded corners */
+    color: #fff;                                 /* Crisp white text */
+    font-size: 1.2rem;
+    font-family: 'Montserrat', sans-serif;
+    outline: none;
+    transition: all 0.3s ease-in-out;
+    box-sizing: border-box;
+    text-align: center;                          /* Centers the number for a cleaner look */
+}
+
+/* Hover state */
+#bidPrice:hover {
+    border-color: rgba(255, 204, 0, 0.5);        /* Glows slightly gold on hover */
+}
+
+/* Focus state (when the user clicks inside) */
+#bidPrice:focus {
+    border-color: #ffcc00;                       /* Solid gold border */
+    background-color: rgba(255, 255, 255, 0.1);  /* Brightens slightly */
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.2); /* Soft gold outer glow */
+}
+
+/* Hide the "ugly" up/down arrows (spinners) for a cleaner design */
+#bidPrice::-webkit-outer-spin-button,
+#bidPrice::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat.woff2') format('woff2');
+}

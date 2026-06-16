@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MAi Portal | Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <script>if (!sessionStorage.getItem('mai_user')) { window.location.replace('login.html'); }</script>
+
+<script>
+        const sessionData = sessionStorage.getItem('mai_user');
+        if (!sessionData) {
+            // Instantly redirect before the HTML body even loads
+            window.location.replace('login.html');
+        }
+    </script>
+
+</head>
+<body>
+    <header class="mobile-top-nav">
+        <div class="mobile-logo">MC <span class="accent">პორტალი</span></div>
+        <button id="mobileMenuToggle" class="hamburger-menu">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+
+    <div class="dashboard-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="brand-logo hide-mobile"><h2>MC <span class="accent">პორტალი</span></h2></div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-link active" id="tabGarage">ნაყიდი მანქანები</a>
+                <a href="#" class="nav-link" id="tabAddCar">მანქანის დამატება</a>
+                <a href="#" class="nav-link admin-only" id="tabUsers">პროფილების შექმნა</a>
+                <a href="#" class="nav-link logout">გამოსვლა</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar hide-mobile">
+                <h1>დააფა</h1>
+                <div class="user-info">Role: <strong id="user-display"></strong></div>
+            </header>
+
+            <section id="viewGarage">
+                <h3 style="margin-bottom: 20px;">მიმდინარე მანქანები</h3>
+                <div class="car-grid" id="carGrid"></div>
+            </section>
+
+            <section class="hidden" id="viewAddCar">
+                <h3 style="margin-bottom: 20px;">მანქანის დამატება</h3>
+                <form class="add-car-form" id="addCarForm">
+                    <div class="form-group"><label>მარკა,მოდელი და წელი</label><input type="text" id="carMake" required></div>
+                    
+                    <div class="flex-row">
+                        <div class="form-group"><label>აუქციონის ფასი ($)</label><input type="number" id="auctionPrice" value="0" required></div>
+                        <div class="form-group"><label>ტრანსპორტირების ფასი ($)</label><input type="number" id="transportPrice" value="0" required></div>
+                        <div class="form-group"><label>გადახდილია ($)</label><input type="number" id="amountPaid" value="0" required></div>
+                        <div class="form-group"><label>გადასახდელია</label><input type="text" id="leftToPayDisplay" value="$0" readonly style="color: #ffcc00; font-weight: bold;"></div>
+                    </div>
+
+                    <div class="flex-row">
+                        <div class="form-group"><label>მიმღების სახელი</label><input type="text" id="recFirstName"></div>
+                        <div class="form-group"><label>მიმღების გვარი</label><input type="text" id="recLastName"></div>
+                        <div class="form-group"><label>პირადი ნომერი</label><input type="text" id="recId"></div>
+                        <div class="form-group"><label>ტელეფონის ნომერი</label><input type="text" id="recPhone"></div>
+                    </div>
+
+                    <div class="flex-row">
+                        <div class="form-group"><label>ყიდვის თარიღი</label><input type="date" id="carPurchaseDate"></div>
+                        <div class="form-group"><label>აუქციონი</label>
+                            <select id="carAuctionName">
+                                <option value="Copart">Copart</option>
+                                <option value="IAAI">IAAI</option>
+                                <option value="Manheim">Manheim</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>ყიდვის ლოკაცია</label><input type="text" id="carBuyLocation"></div>
+                    </div>
+
+                    <div class="flex-row">
+                        <div class="form-group"><label>VIN კოდი</label><input type="text" id="carVin" required></div>
+                        <div class="form-group"><label>ლოტის ნომერი</label><input type="text" id="carLotNumber"></div>
+                        <div class="form-group"><label>დილერზე მიმაგრება</label><input type="text" id="carDealer" required></div>
+                    </div>
+
+                    <div class="flex-row">
+                        <div class="form-group"><label>კონტეინერის ნომერი</label><input type="text" id="carContainerNumber"></div>
+                        <div class="form-group"><label>კონტეინერის კოდი</label><input type="text" id="carContainerCode"></div>
+                    </div>
+
+                    <div class="form-group"><label>ფოტოების დამატება</label><input type="file" id="carPhotos" multiple></div>
+                    <button type="submit" class="btn-primary">დამახსოვრება</button>
+                </form>
+            </section>
+
+            <section class="hidden" id="viewUsers">
+                <h3 style="margin-bottom: 20px;">კაბინეტის შექმნა</h3>
+                <form class="add-car-form" id="addUserForm">
+                    <div class="form-group"><label>სახელი</label><input type="text" id="newUsername" required></div>
+                    <div class="form-group"><label>პაროლი</label><input type="password" id="newPassword" required></div>
+                    <div class="form-group"><label>როლი(დილერი/ადმინი)</label>
+                        <select id="newRole"><option value="dealer">დილერი</option><option value="admin">Admin</option></select>
+                    </div>
+                    <button type="submit" class="btn-primary">მომხმარებლის შექმნა</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <div id="carModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+    <div id="imageLightbox" class="lightbox hidden">
+        <span class="close-lightbox" id="closeLightbox">&times;</span>
+        <img id="lightboxImg" src="">
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
