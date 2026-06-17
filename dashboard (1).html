@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mega Cars Import — დილერის კაბინეტი</title>
+    <script>if (!sessionStorage.getItem('mai_user')) { window.location.replace('login.html'); }</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Georgian:wght@500;700&family=Noto+Sans+Georgian:wght@300;400;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <header class="mobile-top-nav">
+        <div class="mobile-logo">Mega Cars <span class="accent">Import</span></div>
+        <button id="mobileMenuToggle" class="hamburger-menu"><span></span><span></span><span></span></button>
+    </header>
+
+    <div class="dashboard-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="brand-logo">
+                <div class="brand-mark">MC</div>
+                <div><div class="b-name">Mega Cars</div><div class="b-sub">Dealer Portal</div></div>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-cap">მენიუ</div>
+                <a href="#" class="nav-link active" id="tabOverview"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>მთავარი</a>
+                <a href="#" class="nav-link" id="tabGarage"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M3 13l2-5h14l2 5"/><path d="M3 13h18v5H3z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>ჩემი მანქანები</a>
+                <a href="#" class="nav-link" id="tabAddCar"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>მანქანის დამატება</a>
+                <a href="#" class="nav-link admin-only" id="tabUsers"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M17 6a3 3 0 010 6"/></svg>მომხმარებლები</a>
+
+                <div class="nav-cap">მალე</div>
+                <a href="#" class="nav-link nav-soon" data-name="სტატისტიკა"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>სტატისტიკა</a>
+                <a href="#" class="nav-link nav-soon" data-name="ინვოისები"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M6 3h9l3 3v15H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>ინვოისები</a>
+                <a href="#" class="nav-link nav-soon" data-name="მოგების განაწილება"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 16l5-5 4 4 7-7"/><path d="M14 8h6v6"/></svg>მოგების განაწილება</a>
+            </nav>
+            <div class="nav-bottom">
+                <a href="#" class="nav-link logout"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M14 4h4v16h-4"/><path d="M10 12H3M6 8l-4 4 4 4"/></svg>გამოსვლა</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>დილერის კაბინეტი</h1>
+                <div class="top-actions">
+                    <button class="icon-btn" title="შეტყობინებები"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 004 0"/></svg></button>
+                    <div class="user-info">
+                        <div class="avatar" id="userAvatar">M</div>
+                        <div class="u-meta"><strong id="user-display"></strong>დილერის ანგარიში</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- ===== OVERVIEW ===== -->
+                <section id="viewOverview" class="view-section">
+                    <div class="welcome">
+                        <div class="w-ico">👋</div>
+                        <div>
+                            <h2>მოგესალმებით, <span id="ovWelcomeName">დილერო</span>!</h2>
+                            <p>წარმატებულ სამუშაო დღეს გისურვებთ.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="c-head"><span class="c-label">ბალანსი</span><span class="tag-soon">მალე</span></div>
+                            <div class="balance gold">$0.00</div>
+                            <button class="btn-outline" style="margin-top:14px">თანხის გამოტანა</button>
+                            <div class="c-note">ფინანსური მონაცემები ჩაირთვება მალე.</div>
+                        </div>
+                        <div class="card">
+                            <div class="c-head"><span class="c-label">ბალანსი გადასახადის შემდეგ</span><span class="tag-soon">მალე</span></div>
+                            <div class="balance green">$0.00</div>
+                            <div class="c-note">ავტომატურად გამოითვლება გადასახადის გათვალისწინებით.</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-main">
+                        <div>
+                            <div class="card" style="margin-bottom:18px">
+                                <div class="c-head"><span class="c-label">სწრაფი მოქმედებები</span></div>
+                                <div class="quick">
+                                    <a href="#" id="qaAddCar" class="btn-gold">+ მანქანის დამატება</a>
+                                    <a href="#" id="qaCars" class="btn-outline">ჩემი მანქანები</a>
+                                    <a href="/calculator.html" class="btn-outline">სრული კალკულატორი</a>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="c-head"><span class="c-label">მანქანის შემოწმება — VIN</span></div>
+                                <div class="vin-row">
+                                    <input type="text" id="vinInput" placeholder="მაგ. WDDLJ6HB8FA134315" maxlength="17">
+                                    <button class="btn-gold" id="vinCheckBtn">შემოწმება</button>
+                                </div>
+                                <div id="vinResult"></div>
+                                <div class="c-note">ძირითადი ინფო (მარკა/მოდელი/წელი) — წყარო: NHTSA.</div>
+                            </div>
+                        </div>
+
+                        <div class="news-panel">
+                            <div class="news-head">📰 სიახლეები</div>
+                            <div class="news-list">
+                                <div class="news-item">
+                                    <div class="n-title">კეთილი იყოს თქვენი მობრძანება!</div>
+                                    <div class="n-date">Mega Cars Import</div>
+                                    <div class="n-body">თქვენი დილერის კაბინეტი მზადაა. დაამატეთ პირველი მანქანა „მანქანის დამატება" განყოფილებიდან.</div>
+                                </div>
+                                <div class="news-item">
+                                    <div class="n-title">VIN-ის შემოწმება</div>
+                                    <div class="n-date">რჩევა</div>
+                                    <div class="n-body">ლოტის ყიდვამდე შეამოწმეთ VIN კოდი — მარცხნივ ხელმისაწვდომია სწრაფი შემოწმება.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== MY CARS (garage) ===== -->
+                <section id="viewGarage" class="view-section hidden">
+                    <h3 class="sec-title">ჩემი მანქანები</h3>
+                    <div class="car-grid" id="carGrid"></div>
+                </section>
+
+                <!-- ===== ADD CAR ===== -->
+                <section id="viewAddCar" class="view-section hidden">
+                    <h3 class="sec-title">მანქანის დამატება</h3>
+                    <form class="add-car-form" id="addCarForm">
+                        <div class="form-group"><label>მარკა, მოდელი და წელი</label><input type="text" id="carMake" required></div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>აუქციონის ფასი ($)</label><input type="number" id="auctionPrice" value="0" required></div>
+                            <div class="form-group"><label>ტრანსპორტირების ფასი ($)</label><input type="number" id="transportPrice" value="0" required></div>
+                            <div class="form-group"><label>გადახდილია ($)</label><input type="number" id="amountPaid" value="0" required></div>
+                            <div class="form-group"><label>დარჩენილია</label><input type="text" id="leftToPayDisplay" value="$0" readonly style="color:var(--gold);font-weight:bold"></div>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>მიმღების სახელი</label><input type="text" id="recFirstName"></div>
+                            <div class="form-group"><label>მიმღების გვარი</label><input type="text" id="recLastName"></div>
+                            <div class="form-group"><label>პირადი ნომერი</label><input type="text" id="recId"></div>
+                            <div class="form-group"><label>ტელეფონის ნომერი</label><input type="text" id="recPhone"></div>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>შესყიდვის თარიღი</label><input type="date" id="carPurchaseDate"></div>
+                            <div class="form-group"><label>აუქციონი</label>
+                                <select id="carAuctionName"><option value="Copart">Copart</option><option value="IAAI">IAAI</option><option value="Manheim">Manheim</option></select>
+                            </div>
+                            <div class="form-group"><label>შესყიდვის ლოკაცია</label><input type="text" id="carBuyLocation"></div>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>VIN კოდი</label><input type="text" id="carVin" required></div>
+                            <div class="form-group"><label>ლოტის ნომერი</label><input type="text" id="carLotNumber"></div>
+                            <div class="form-group"><label>დილერზე მიმაგრება</label><input type="text" id="carDealer" required></div>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>კონტეინერის ნომერი</label><input type="text" id="carContainerNumber"></div>
+                            <div class="form-group"><label>კონტეინერის კოდი</label><input type="text" id="carContainerCode"></div>
+                        </div>
+                        <div class="form-group"><label>ფოტოების დამატება</label><input type="file" id="carPhotos" multiple></div>
+                        <button type="submit" class="btn-primary">შენახვა</button>
+                    </form>
+                </section>
+
+                <!-- ===== USERS (admin) ===== -->
+                <section id="viewUsers" class="view-section hidden">
+                    <h3 class="sec-title">მომხმარებლები</h3>
+                    <form class="add-car-form" id="addUserForm">
+                        <div class="form-group"><label>სახელი</label><input type="text" id="newUsername" required></div>
+                        <div class="form-group"><label>პაროლი</label><input type="password" id="newPassword" required></div>
+                        <div class="form-group"><label>როლი</label>
+                            <select id="newRole"><option value="dealer">დილერი</option><option value="admin">ადმინი</option></select>
+                        </div>
+                        <button type="submit" class="btn-primary">მომხმარებლის შექმნა</button>
+                    </form>
+                </section>
+
+                <!-- ===== SOON placeholder ===== -->
+                <section id="viewSoon" class="view-section hidden">
+                    <div class="soon-box">
+                        <div class="s-ico">🛠️</div>
+                        <h3 style="color:var(--text);margin-bottom:8px;font-family:'Noto Serif Georgian',serif"><span id="soonName"></span></h3>
+                        <p>ეს განყოფილება მალე დაემატება.</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="carModal" class="modal hidden">
+        <div class="modal-content"><span class="close-btn" id="closeModal">&times;</span><div id="modalBody"></div></div>
+    </div>
+    <div id="imageLightbox" class="lightbox hidden">
+        <span class="close-lightbox" id="closeLightbox">&times;</span><img id="lightboxImg" src="">
+    </div>
+
+    <script src="dashboard.js"></script>
+    <script>
+    (function(){
+      function ready(fn){ if(document.readyState!='loading') fn(); else document.addEventListener('DOMContentLoaded',fn); }
+      ready(function(){
+        var vOverview=document.getElementById('viewOverview');
+        var tabOverview=document.getElementById('tabOverview');
+        var hideIds=['viewGarage','viewAddCar','viewUsers','viewSoon'];
+        function hideAll(){hideIds.forEach(function(id){var s=document.getElementById(id);if(s)s.classList.add('hidden');});}
+        function clearActive(){document.querySelectorAll('.nav-link').forEach(function(l){l.classList.remove('active');});}
+        function showOverview(){hideAll();if(vOverview)vOverview.classList.remove('hidden');clearActive();if(tabOverview)tabOverview.classList.add('active');}
+        if(tabOverview)tabOverview.addEventListener('click',function(e){e.preventDefault();showOverview();});
+        ['tabGarage','tabAddCar','tabUsers'].forEach(function(id){var t=document.getElementById(id);if(t)t.addEventListener('click',function(){if(vOverview)vOverview.classList.add('hidden');var sv=document.getElementById('viewSoon');if(sv)sv.classList.add('hidden');});});
+        document.querySelectorAll('.nav-soon').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();hideAll();if(vOverview)vOverview.classList.add('hidden');var sv=document.getElementById('viewSoon');if(sv){sv.classList.remove('hidden');document.getElementById('soonName').textContent=l.getAttribute('data-name')||'';}clearActive();l.classList.add('active');});});
+        var qa=document.getElementById('qaAddCar');if(qa)qa.addEventListener('click',function(e){e.preventDefault();var t=document.getElementById('tabAddCar');if(t)t.click();});
+        var qg=document.getElementById('qaCars');if(qg)qg.addEventListener('click',function(e){e.preventDefault();var t=document.getElementById('tabGarage');if(t)t.click();});
+        try{var u=JSON.parse(sessionStorage.getItem('mai_user')||'{}');if(u.username){var n=document.getElementById('ovWelcomeName');if(n)n.textContent=u.username;var a=document.getElementById('userAvatar');if(a)a.textContent=(String(u.username)[0]||'M').toUpperCase();}}catch(e){}
+        var vb=document.getElementById('vinCheckBtn'),vi=document.getElementById('vinInput'),vr=document.getElementById('vinResult');
+        if(vb&&vi&&vr){
+          function run(){var vin=(vi.value||'').trim();if(vin.length<8){vr.innerHTML='<span style="color:var(--red)">შეიყვანე სწორი VIN კოდი.</span>';return;}vr.textContent='იტვირთება…';
+            fetch('https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/'+encodeURIComponent(vin)+'?format=json').then(function(r){return r.json();}).then(function(d){var v=(d.Results&&d.Results[0])||{};
+              if(v.Make||v.ModelYear){vr.innerHTML='<div class="vin-hit"><b>'+[v.ModelYear,v.Make,v.Model].filter(Boolean).join(' ')+'</b><br>'+[v.BodyClass,v.FuelTypePrimary,(v.EngineCylinders?v.EngineCylinders+'-cyl':'')].filter(Boolean).join(' • ')+'</div>';}
+              else{vr.innerHTML='<span style="color:var(--muted)">ამ VIN-ზე ინფორმაცია ვერ მოიძებნა.</span>';}
+            }).catch(function(){vr.innerHTML='<span style="color:var(--red)">შემოწმება ვერ მოხერხდა. სცადე ხელახლა.</span>';});}
+          vb.addEventListener('click',run);vi.addEventListener('keydown',function(e){if(e.key==='Enter')run();});
+        }
+      });
+    })();
+    </script>
+</body>
+</html>
