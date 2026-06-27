@@ -5,9 +5,9 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken'); // SECURITY: JWT tokens
-const cookieParser = require('cookie-parser'); // SECURITY: Read HttpOnly cookies
-const helmet = require('helmet'); // SECURITY: Set HTTP headers & CSP
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
 require('dotenv').config();
 
 const app = express(); 
@@ -18,26 +18,16 @@ const Car = require('./Models/Car');
 // --- 1. SECURITY & MIDDLEWARE ---
 app.use(cookieParser());
 
-// Helmet Content-Security-Policy (CSP)
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com"],
             scriptSrcAttr: ["'unsafe-inline'"],
-            
-            // FIX 1: Allow Google Fonts CSS
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            
-            // FIX 2: Allow the actual font files to load
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            
             imgSrc: ["'self'", "data:", "http://googleusercontent.com", "https://www.google.com"], 
-            
-            // FIX 3: Merged your duplicate connectSrc lines into one
             connectSrc: ["'self'", "https://formspree.io", "https://static.cloudflareinsights.com"],
-            
-            // FIX 4: Allow Google Maps
             frameSrc: ["'self'", "http://googleusercontent.com", "https://www.google.com"]
         }
     }
@@ -47,7 +37,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from the root and the uploads folder
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
@@ -59,7 +48,6 @@ app.use(express.static(__dirname));
 const requireAuth = (req, res, next) => {
     const token = req.cookies.mai_token;
     if (!token) return res.status(401).json({ error: "Access Denied: No Token Provided" });
-
     try {
         const verified = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key');
         req.user = verified; 
@@ -67,6 +55,14 @@ const requireAuth = (req, res, next) => {
     } catch (err) {
         res.status(400).json({ error: "Invalid or Expired Token" });
     }
+};
+
+// ADMIN ONLY middleware
+const requireAdmin = (req, res, next) => {
+    if (String(req.user.role || '').toLowerCase() !== 'admin') {
+        return res.status(403).json({ error: "Access Denied: Admin privileges required" });
+    }
+    next();
 };
 
 // --- 3. MAIN HOME ROUTE ---
@@ -88,8 +84,6 @@ const upload = multer({
 mongoose.connect(process.env.MONGO_URI)
     .then(async () => {
         console.log('MAi Database Connected!');
-        // Auto-create the first admin from environment variables, only if no admin exists yet.
-        // Set ADMIN_USERNAME and ADMIN_PASSWORD in your host's environment variables (e.g. Render).
         try {
             const adminExists = await User.findOne({ role: 'admin' });
             if (!adminExists && process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD) {
@@ -104,14 +98,8 @@ mongoose.connect(process.env.MONGO_URI)
     .catch(err => console.log("Database connection error:", err));
 
 // --- 6. AUTH ROUTES ---
-// ADMIN ONLY: Only admins can create new users
-app.post('/api/auth/register', requireAuth, async (req, res) => {
+app.post('/api/auth/register', requireAuth, requireAdmin, async (req, res) => {
     try {
-        // Check if the requester is an admin
-        if (String(req.user.role || '').toLowerCase() !== 'admin') {
-            return res.status(403).json({ error: "Access Denied: Admin privileges required" });
-        }
-        
         const { username, password, role } = req.body;
         const normalizedRole = String(role || '').toLowerCase();
         if (!['admin', 'dealer'].includes(normalizedRole)) {
@@ -133,14 +121,12 @@ app.post('/api/auth/login', async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
-        // Generate JWT
         const token = jwt.sign(
             { id: user._id, role: String(user.role || '').toLowerCase(), username: user.username }, 
             process.env.JWT_SECRET || 'fallback_secret_key', 
             { expiresIn: '8h' }
         );
 
-        // Set HttpOnly Cookie
         res.cookie('mai_token', token, {
             httpOnly: true, 
             secure: process.env.NODE_ENV === 'production', 
@@ -152,15 +138,12 @@ app.post('/api/auth/login', async (req, res) => {
     } catch (error) { res.status(500).json({ error: "Server error" }); }
 });
 
-// User Logout Route (clears the secure cookie)
 app.post('/api/auth/logout', (req, res) => {
     res.clearCookie('mai_token');
     res.json({ message: "Logged out" });
 });
 
 // --- 7. CAR INVENTORY ROUTES ---
-
-// PUBLIC ROUTE: The homepage needs this to display the Deal of the Day without logging in
 app.get('/api/cars/featured', async (req, res) => {
     try {
         const featuredCar = await Car.findOne({ isFeatured: true });
@@ -168,15 +151,12 @@ app.get('/api/cars/featured', async (req, res) => {
     } catch (error) { res.status(500).json({ error: "Server error" }); }
 });
 
-// PROTECTED ROUTES: Only logged-in users with a valid token can access these
 app.get('/api/cars', requireAuth, async (req, res) => {
     try {
         let cars;
         if (String(req.user.role || '').toLowerCase() === 'admin') {
-            // Admins see all cars
             cars = await Car.find().sort({ createdAt: -1 });
         } else {
-            // Dealers see only their own cars
             cars = await Car.find({ dealerId: req.user.username }).sort({ createdAt: -1 });
         }
         res.json(cars);
@@ -185,7 +165,8 @@ app.get('/api/cars', requireAuth, async (req, res) => {
     }
 });
 
-app.post('/api/cars', requireAuth, upload.array('photos', 30), async (req, res) => {
+// ADMIN ONLY: dealers can NOT add cars anymore
+app.post('/api/cars', requireAuth, requireAdmin, upload.array('photos', 30), async (req, res) => {
     try {
         const { 
             makeModel, auctionPrice, transportPrice, amountPaid, vin, dealerId, 
@@ -193,15 +174,7 @@ app.post('/api/cars', requireAuth, upload.array('photos', 30), async (req, res) 
             recipientFirstName, recipientLastName, recipientId, recipientPhone 
         } = req.body;
         
-        // Determine the actual dealerId based on role
-        let finalDealerId;
-        if (String(req.user.role || '').toLowerCase() === 'admin') {
-            // Admins can assign any dealer
-            finalDealerId = (dealerId || req.user.username || '').trim();
-        } else {
-            // Dealers can only add cars under their own name
-            finalDealerId = req.user.username;
-        }
+        const finalDealerId = (dealerId || req.user.username || '').trim();
         
         const imagePaths = (req.files || []).map(file => file.filename);
         if (!makeModel || !vin || !finalDealerId) {
@@ -210,7 +183,7 @@ app.post('/api/cars', requireAuth, upload.array('photos', 30), async (req, res) 
         
         const newCar = new Car({ 
             makeModel, 
-            auctionPrice: Number(auctionPrice), transportPrice: Number(transportPrice), amountPaid: Number(amountPaid), 
+            auctionPrice: Number(auctionPrice) || 0, transportPrice: Number(transportPrice) || 0, amountPaid: Number(amountPaid) || 0, 
             vin, dealerId: finalDealerId, 
             purchaseDate, auctionName, lotNumber, buyLocation, containerNumber, containerCode,
             recipientFirstName, recipientLastName, recipientId, recipientPhone,
@@ -219,18 +192,17 @@ app.post('/api/cars', requireAuth, upload.array('photos', 30), async (req, res) 
         
         await newCar.save();
         res.status(201).json(newCar);
-    } catch (error) { res.status(400).json({ error: "Error saving car." }); }
+    } catch (error) { 
+        console.error("Error saving car:", error);
+        res.status(400).json({ error: "Error saving car.", details: error.message }); 
+    }
 });
 
-app.patch('/api/cars/:id', requireAuth, async (req, res) => {
+// ADMIN ONLY: only admin can edit car details
+app.patch('/api/cars/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
         if (!car) return res.status(404).json({ error: "Car not found" });
-        
-        // Check authorization: admin can edit any car, dealer can only edit their own
-        if (String(req.user.role || '').toLowerCase() !== 'admin' && car.dealerId !== req.user.username) {
-            return res.status(403).json({ error: "Access Denied: You can only edit your own cars" });
-        }
         
         const { 
             makeModel, auctionPrice, transportPrice, amountPaid, vin, dealerId, 
@@ -238,48 +210,33 @@ app.patch('/api/cars/:id', requireAuth, async (req, res) => {
             recipientFirstName, recipientLastName, recipientId, recipientPhone
         } = req.body;
         
-        // Determine the actual dealerId based on role
-        let finalDealerId;
-        if (String(req.user.role || '').toLowerCase() === 'admin') {
-            // Admins can reassign to any dealer
-            finalDealerId = (dealerId || car.dealerId || req.user.username || '').trim();
-        } else {
-            // Dealers cannot change the dealerId (keep it as their own)
-            finalDealerId = car.dealerId;
-        }
+        const finalDealerId = (dealerId || car.dealerId || req.user.username || '').trim();
         
         const updatedCar = await Car.findByIdAndUpdate(req.params.id, { 
             makeModel, 
-            auctionPrice: Number(auctionPrice), transportPrice: Number(transportPrice), amountPaid: Number(amountPaid), 
+            auctionPrice: Number(auctionPrice) || 0, transportPrice: Number(transportPrice) || 0, amountPaid: Number(amountPaid) || 0, 
             vin, dealerId: finalDealerId,
             purchaseDate, auctionName, lotNumber, buyLocation, containerNumber, containerCode,
             recipientFirstName, recipientLastName, recipientId, recipientPhone
         }, { new: true });
         res.json(updatedCar);
-    } catch (error) { res.status(400).json({ error: "Failed to update car details." }); }
+    } catch (error) { 
+        console.error("Error updating car:", error);
+        res.status(400).json({ error: "Failed to update car details." }); 
+    }
 });
 
-// Upgraded Bulletproof File Deletion with Ownership Check
-app.delete('/api/cars/:id', requireAuth, async (req, res) => {
+// ADMIN ONLY: only admin can delete cars
+app.delete('/api/cars/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
         if (!car) return res.status(404).json({ error: "Car not found" });
-
-        // Check authorization: admin can delete any car, dealer can only delete their own
-        if (String(req.user.role || '').toLowerCase() !== 'admin' && car.dealerId !== req.user.username) {
-            return res.status(403).json({ error: "Access Denied: You can only delete your own cars" });
-        }
-
-        console.log(`[TRASH] Deleting car: ${car.vin} - Hunting down files...`);
 
         if (car.images && car.images.length > 0) {
             car.images.forEach(img => {
                 const cleanName = path.basename(img); 
                 const fullPath = path.join(__dirname, 'uploads', cleanName);
-                if (fs.existsSync(fullPath)) {
-                    fs.unlinkSync(fullPath);
-                    console.log(`--> Deleted Image: ${cleanName}`);
-                }
+                if (fs.existsSync(fullPath)) { fs.unlinkSync(fullPath); }
             });
         }
 
@@ -287,15 +244,11 @@ app.delete('/api/cars/:id', requireAuth, async (req, res) => {
             car.documents.forEach(doc => {
                 const cleanName = path.basename(doc.filename);
                 const fullPath = path.join(__dirname, 'uploads', cleanName);
-                if (fs.existsSync(fullPath)) {
-                    fs.unlinkSync(fullPath);
-                    console.log(`--> Deleted Document: ${cleanName}`);
-                }
+                if (fs.existsSync(fullPath)) { fs.unlinkSync(fullPath); }
             });
         }
 
         await Car.findByIdAndDelete(req.params.id);
-        console.log(`[TRASH] Car ${car.vin} successfully erased from database.`);
         res.json({ message: "Vehicle and all associated files deleted successfully." });
     } catch (error) {
         console.error("Delete Error:", error);
@@ -303,45 +256,31 @@ app.delete('/api/cars/:id', requireAuth, async (req, res) => {
     }
 });
 
-app.patch('/api/cars/:id/status', requireAuth, async (req, res) => {
+// ADMIN ONLY: only admin can change status
+app.patch('/api/cars/:id/status', requireAuth, requireAdmin, async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
         if (!car) return res.status(404).json({ error: "Car not found" });
-        
-        // Check authorization: admin can edit any car, dealer can only edit their own
-        if (String(req.user.role || '').toLowerCase() !== 'admin' && car.dealerId !== req.user.username) {
-            return res.status(403).json({ error: "Access Denied: You can only update your own cars" });
-        }
-        
         const { status } = req.body;
         await Car.findByIdAndUpdate(req.params.id, { status });
         res.json({ message: "Status updated successfully" });
     } catch (error) { res.status(400).json({ error: "Failed to update status." }); }
 });
 
-app.patch('/api/cars/:id/feature', requireAuth, async (req, res) => {
+// ADMIN ONLY: feature a car
+app.patch('/api/cars/:id/feature', requireAuth, requireAdmin, async (req, res) => {
     try {
-        // Only admins can feature cars
-        if (String(req.user.role || '').toLowerCase() !== 'admin') {
-            return res.status(403).json({ error: "Access Denied: Admin privileges required" });
-        }
-        
         await Car.updateMany({}, { $set: { isFeatured: false } });
         await Car.findByIdAndUpdate(req.params.id, { isFeatured: true });
         res.json({ message: "Deal of the Day updated!" });
     } catch (error) { res.status(400).json({ error: "Failed to feature car." }); }
 });
 
-app.patch('/api/cars/:id/documents', requireAuth, upload.array('docs', 5), async (req, res) => {
+// ADMIN ONLY: upload documents
+app.patch('/api/cars/:id/documents', requireAuth, requireAdmin, upload.array('docs', 5), async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
         if (!car) return res.status(404).json({ error: "Car not found" });
-        
-        // Check authorization: admin can edit any car, dealer can only edit their own
-        if (String(req.user.role || '').toLowerCase() !== 'admin' && car.dealerId !== req.user.username) {
-            return res.status(403).json({ error: "Access Denied: You can only upload documents for your own cars" });
-        }
-        
         const newDocs = req.files.map(f => ({ originalName: f.originalname, filename: f.filename }));
         const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $push: { documents: { $each: newDocs } } }, { new: true });
         res.json(updatedCar);
