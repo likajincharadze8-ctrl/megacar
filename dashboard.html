@@ -26,7 +26,7 @@
                 <div class="nav-cap">მენიუ</div>
                 <a href="#" class="nav-link active" id="tabOverview"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>მთავარი</a>
                 <a href="#" class="nav-link" id="tabGarage"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M3 13l2-5h14l2 5"/><path d="M3 13h18v5H3z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>ჩემი მანქანები</a>
-                <a href="#" class="nav-link" id="tabAddCar"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>მანქანის დამატება</a>
+                <a href="#" class="nav-link admin-only" id="tabAddCar"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>მანქანის დამატება</a>
                 <a href="#" class="nav-link admin-only" id="tabUsers"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M17 6a3 3 0 010 6"/></svg>მომხმარებლები</a>
 
                 <div class="nav-cap">მალე</div>
@@ -81,7 +81,7 @@
                             <div class="card" style="margin-bottom:18px">
                                 <div class="c-head"><span class="c-label">სწრაფი მოქმედებები</span></div>
                                 <div class="quick">
-                                    <a href="#" id="qaAddCar" class="btn-gold">+ მანქანის დამატება</a>
+                                    <a href="#" id="qaAddCar" class="btn-gold admin-only">+ მანქანის დამატება</a>
                                     <a href="#" id="qaCars" class="btn-outline">ჩემი მანქანები</a>
                                     <a href="/calculator.html" class="btn-outline">სრული კალკულატორი</a>
                                 </div>
@@ -103,7 +103,7 @@
                                 <div class="news-item">
                                     <div class="n-title">კეთილი იყოს თქვენი მობრძანება!</div>
                                     <div class="n-date">Mega Cars Import</div>
-                                    <div class="n-body">თქვენი დილერის კაბინეტი მზადაა. დაამატეთ პირველი მანქანა „მანქანის დამატება" განყოფილებიდან.</div>
+                                    <div class="n-body">თქვენი დილერის კაბინეტი მზადაა. თქვენი მანქანები გამოჩნდება „ჩემი მანქანები" განყოფილებაში.</div>
                                 </div>
                                 <div class="news-item">
                                     <div class="n-title">VIN-ის შემოწმება</div>
@@ -121,7 +121,7 @@
                     <div class="car-grid" id="carGrid"></div>
                 </section>
 
-                <!-- ===== ADD CAR ===== -->
+                <!-- ===== ADD CAR (admin only) ===== -->
                 <section id="viewAddCar" class="view-section hidden">
                     <h3 class="sec-title">მანქანის დამატება</h3>
                     <form class="add-car-form" id="addCarForm">
