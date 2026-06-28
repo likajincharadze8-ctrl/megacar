@@ -8,12 +8,14 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
+const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
 const app = express(); 
 
 const User = require('./Models/User');
 const Car = require('./Models/Car');
+const Invoice = require('./Models/Invoice');
 
 // --- 1. SECURITY & MIDDLEWARE ---
 app.use(cookieParser());
@@ -27,7 +29,7 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "http://googleusercontent.com", "https://www.google.com"], 
-            connectSrc: ["'self'", "https://formspree.io", "https://static.cloudflareinsights.com"],
+            connectSrc: ["'self'", "https://formspree.io", "https://static.cloudflareinsights.com", "https://vpic.nhtsa.dot.gov"],
             frameSrc: ["'self'", "http://googleusercontent.com", "https://www.google.com"]
         }
     }
@@ -57,7 +59,6 @@ const requireAuth = (req, res, next) => {
     }
 };
 
-// ADMIN ONLY middleware
 const requireAdmin = (req, res, next) => {
     if (String(req.user.role || '').toLowerCase() !== 'admin') {
         return res.status(403).json({ error: "Access Denied: Admin privileges required" });
@@ -165,7 +166,6 @@ app.get('/api/cars', requireAuth, async (req, res) => {
     }
 });
 
-// ADMIN ONLY: dealers can NOT add cars anymore
 app.post('/api/cars', requireAuth, requireAdmin, upload.array('photos', 30), async (req, res) => {
     try {
         const { 
@@ -198,7 +198,6 @@ app.post('/api/cars', requireAuth, requireAdmin, upload.array('photos', 30), asy
     }
 });
 
-// ADMIN ONLY: only admin can edit car details
 app.patch('/api/cars/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
@@ -226,7 +225,6 @@ app.patch('/api/cars/:id', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-// ADMIN ONLY: only admin can delete cars
 app.delete('/api/cars/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
@@ -256,7 +254,6 @@ app.delete('/api/cars/:id', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-// ADMIN ONLY: only admin can change status
 app.patch('/api/cars/:id/status', requireAuth, requireAdmin, async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
@@ -267,7 +264,6 @@ app.patch('/api/cars/:id/status', requireAuth, requireAdmin, async (req, res) =>
     } catch (error) { res.status(400).json({ error: "Failed to update status." }); }
 });
 
-// ADMIN ONLY: feature a car
 app.patch('/api/cars/:id/feature', requireAuth, requireAdmin, async (req, res) => {
     try {
         await Car.updateMany({}, { $set: { isFeatured: false } });
@@ -276,7 +272,6 @@ app.patch('/api/cars/:id/feature', requireAuth, requireAdmin, async (req, res) =
     } catch (error) { res.status(400).json({ error: "Failed to feature car." }); }
 });
 
-// ADMIN ONLY: upload documents
 app.patch('/api/cars/:id/documents', requireAuth, requireAdmin, upload.array('docs', 5), async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
@@ -287,7 +282,179 @@ app.patch('/api/cars/:id/documents', requireAuth, requireAdmin, upload.array('do
     } catch (error) { res.status(400).json({ error: "Failed to upload documents." }); }
 });
 
-// --- 8. START SERVER ---
+// --- 8. INVOICE ROUTES ---
+
+// GET invoices: admin sees all, dealer sees only their own
+app.get('/api/invoices', requireAuth, async (req, res) => {
+    try {
+        let invoices;
+        if (String(req.user.role || '').toLowerCase() === 'admin') {
+            invoices = await Invoice.find().sort({ createdAt: -1 });
+        } else {
+            invoices = await Invoice.find({ dealerId: req.user.username }).sort({ createdAt: -1 });
+        }
+        res.json(invoices);
+    } catch (error) {
+        console.error("Error fetching invoices:", error);
+        res.status(500).json({ error: "Failed to fetch invoices" });
+    }
+});
+
+// CREATE invoice (admin only)
+app.post('/api/invoices', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const {
+            dealerId, recipientFirstName, recipientLastName,
+            makeModel, vin, description, totalAmount, amountPaid
+        } = req.body;
+
+        if (!dealerId) {
+            return res.status(400).json({ error: 'Dealer is required.' });
+        }
+
+        // Auto-generate invoice number: INV-YYYYMM-XXXX
+        const now = new Date();
+        const ym = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const count = await Invoice.countDocuments();
+        const invoiceNumber = `INV-${ym}-${String(count + 1).padStart(4, '0')}`;
+
+        const total = Number(totalAmount) || 0;
+        const paid = Number(amountPaid) || 0;
+        const status = paid >= total && total > 0 ? 'Paid' : (paid > 0 ? 'Partial' : 'Unpaid');
+
+        const newInvoice = new Invoice({
+            invoiceNumber,
+            dealerId: String(dealerId).trim(),
+            recipientFirstName, recipientLastName,
+            makeModel, vin, description,
+            totalAmount: total, amountPaid: paid, status
+        });
+
+        await newInvoice.save();
+        res.status(201).json(newInvoice);
+    } catch (error) {
+        console.error("Error creating invoice:", error);
+        res.status(400).json({ error: "Error creating invoice.", details: error.message });
+    }
+});
+
+// DELETE invoice (admin only)
+app.delete('/api/invoices/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const invoice = await Invoice.findByIdAndDelete(req.params.id);
+        if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+        res.json({ message: "Invoice deleted" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to delete invoice" });
+    }
+});
+
+// DOWNLOAD invoice as PDF (admin = any, dealer = only their own)
+app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
+    try {
+        const invoice = await Invoice.findById(req.params.id);
+        if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+
+        // Authorization: dealer can only download their own
+        if (String(req.user.role || '').toLowerCase() !== 'admin' && invoice.dealerId !== req.user.username) {
+            return res.status(403).json({ error: "Access Denied" });
+        }
+
+        // Brand colors
+        const OBSIDIAN = '#0E0E12';
+        const GOLD = '#C9A24A';
+        const STAMP_RED = '#BE3B30';
+
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoiceNumber}.pdf"`);
+        doc.pipe(res);
+
+        const pageWidth = doc.page.width;
+        const left = 50;
+        const right = pageWidth - 50;
+
+        // Header band
+        doc.rect(0, 0, pageWidth, 110).fill(OBSIDIAN);
+        doc.fillColor(GOLD).fontSize(26).text('MEGA CARS IMPORT', left, 35, { align: 'left' });
+        doc.fillColor('#FFFFFF').fontSize(10).text('Car Import from USA to Georgia  •  Copart & IAAI', left, 68);
+        doc.fillColor(GOLD).fontSize(9).text('megacar.ge  •  +995 557 936 618', left, 84);
+
+        // Invoice title block
+        doc.fillColor(OBSIDIAN).fontSize(22).text('INVOICE', left, 140);
+        doc.fillColor('#555555').fontSize(10)
+            .text(`Invoice #: ${invoice.invoiceNumber}`, left, 170)
+            .text(`Date: ${new Date(invoice.createdAt).toLocaleDateString('en-GB')}`, left, 185)
+            .text(`Status: ${invoice.status}`, left, 200);
+
+        // Bill To box
+        doc.fillColor(OBSIDIAN).fontSize(12).text('BILL TO', right - 200, 140, { width: 200, align: 'right' });
+        doc.fillColor('#333333').fontSize(11)
+            .text(`${invoice.recipientFirstName || ''} ${invoice.recipientLastName || ''}`.trim() || '—', right - 200, 160, { width: 200, align: 'right' })
+            .text(`Dealer: ${invoice.dealerId}`, right - 200, 176, { width: 200, align: 'right' });
+
+        // Divider
+        doc.moveTo(left, 230).lineTo(right, 230).strokeColor(GOLD).lineWidth(2).stroke();
+
+        // Vehicle info
+        let y = 250;
+        doc.fillColor(OBSIDIAN).fontSize(13).text('Vehicle Details', left, y);
+        y += 22;
+        doc.fillColor('#333333').fontSize(11)
+            .text(`Make / Model:  ${invoice.makeModel || '—'}`, left, y);
+        y += 18;
+        doc.text(`VIN:  ${invoice.vin || '—'}`, left, y);
+        y += 30;
+
+        // Description
+        if (invoice.description) {
+            doc.fillColor(OBSIDIAN).fontSize(13).text('Description', left, y);
+            y += 22;
+            doc.fillColor('#333333').fontSize(11).text(invoice.description, left, y, { width: right - left });
+            y += 50;
+        }
+
+        // Amount table
+        const balance = (invoice.totalAmount || 0) - (invoice.amountPaid || 0);
+        const tableTop = Math.max(y, 420);
+        doc.rect(left, tableTop, right - left, 28).fill(OBSIDIAN);
+        doc.fillColor(GOLD).fontSize(11)
+            .text('DESCRIPTION', left + 12, tableTop + 9)
+            .text('AMOUNT (USD)', right - 160, tableTop + 9, { width: 148, align: 'right' });
+
+        const rows = [
+            ['Total Amount', `$${(invoice.totalAmount || 0).toLocaleString()}`],
+            ['Amount Paid', `$${(invoice.amountPaid || 0).toLocaleString()}`],
+        ];
+        let ry = tableTop + 28;
+        rows.forEach(([label, val]) => {
+            doc.fillColor('#333333').fontSize(11)
+                .text(label, left + 12, ry + 9)
+                .text(val, right - 160, ry + 9, { width: 148, align: 'right' });
+            doc.moveTo(left, ry + 30).lineTo(right, ry + 30).strokeColor('#DDDDDD').lineWidth(1).stroke();
+            ry += 30;
+        });
+
+        // Balance row (highlighted)
+        doc.rect(left, ry, right - left, 34).fill(balance > 0 ? STAMP_RED : '#1E7E34');
+        doc.fillColor('#FFFFFF').fontSize(13)
+            .text(balance > 0 ? 'BALANCE DUE' : 'PAID IN FULL', left + 12, ry + 10)
+            .text(`$${balance.toLocaleString()}`, right - 160, ry + 10, { width: 148, align: 'right' });
+
+        // Footer
+        doc.fillColor('#999999').fontSize(9)
+            .text('Thank you for your business.  •  Mega Cars Import LLC  •  Poti, Batumi, Kobuleti, Georgia',
+                left, doc.page.height - 70, { width: right - left, align: 'center' });
+
+        doc.end();
+    } catch (error) {
+        console.error("PDF generation error:", error);
+        res.status(500).json({ error: "Failed to generate PDF" });
+    }
+});
+
+// --- 9. START SERVER ---
 const PORT = Number(process.env.PORT) || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
