@@ -20,9 +20,9 @@ html::-webkit-scrollbar {
 }
 
 body {
-    background-color: #000;
+    background-color: #FAF6EE;
     height: 100%;
-    color: #fff;
+    color: #17171C;
     font-family: 'Montserrat', sans-serif;
     overflow-x: hidden;
 }
@@ -48,7 +48,7 @@ body {
     width: 100%;
     height: 100%;
     object-fit: contain; /* Shows the whole image, no zoom */
-    background-color: #000; /* Fills any gaps with black */
+    background-color: #FAF6EE; /* Fills any gaps with warm ivory */
     position: absolute;
     top: 0;
     left: 0;
@@ -72,7 +72,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(250, 246, 238, 0.55);
 }
 
 .desktop-video { display: block; }
@@ -89,8 +89,8 @@ body {
     top: 0;
     width: 100%;
     z-index: 10;
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.2);
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+    border-bottom: 0.5px solid rgba(23, 23, 28, 0.1);
+    background: linear-gradient(to bottom, rgba(250, 246, 238, 0.9) 0%, rgba(250, 246, 238, 0) 100%);
 }
 
 .logo-placeholder {
@@ -104,7 +104,7 @@ body {
 }
 
 .top-nav-links a {
-    color: #fff;
+    color: #17171C;
     text-decoration: none;
     font-size: 14px;
     font-weight: 600;
@@ -114,7 +114,7 @@ body {
 }
 
 .top-nav-links a:hover {
-    color: #ffcc00;
+    color: #B38A3A;
 }
 
 .header-right {
@@ -128,7 +128,7 @@ body {
     align-items: center;
     gap: 5px;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(23, 23, 28, 0.55);
 }
 
 .lang-link {
@@ -139,7 +139,7 @@ body {
 }
 
 .lang-link.active, .lang-link:hover {
-    color: #ffffff;
+    color: #17171C;
 }
 
 .lang-link:focus-visible {
@@ -198,13 +198,13 @@ body {
 .divider-line {
     width: 150px; 
     height: 0.5px;
-    background-color: rgba(255, 255, 255, 0.4);
+    background-color: rgba(23, 23, 28, 0.25);
 }
 
 .cta-button, .btn-primary {
     background: none;
-    color: white;
-    border: 1px solid white;
+    color: #17171C;
+    border: 1px solid #17171C;
     width: 240px; 
     height: 45px;
     text-transform: uppercase;
@@ -215,12 +215,12 @@ body {
 }
 
 .cta-button:hover, .btn-primary:hover {
-    background: white;
-    color: black;
+    background: #17171C;
+    color: #FAF6EE;
 }
 
-.content-section { background-color: #000; }
-.grey-bg { background-color: #0a0a0a; }
+.content-section { background-color: #FAF6EE; }
+.grey-bg { background-color: #F3EDE0; }
 
 .section-container {
     width: 100%;
@@ -281,29 +281,29 @@ body {
 .calc-slide-container {
     max-width: 600px;
     margin: 0 auto;
-    background: #121212;
+    background: #FFFFFF;
     padding: 40px;
     border-radius: 8px;
-    border: 1px solid #333;
+    border: 1px solid #E8DFC8;
     text-align: left;
 }
 
 .calc-form-group { margin-bottom: 25px; }
-.calc-form-group label { display: block; margin-bottom: 10px; color: #bbb; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-.calc-form-group select { width: 100%; padding: 15px; background: #000; color: #fff; border: 1px solid #444; border-radius: 5px; font-size: 16px; outline: none; transition: border-color 0.3s; }
-.calc-form-group select:focus { border-color: #ffcc00; }
+.calc-form-group label { display: block; margin-bottom: 10px; color: #7a7568; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+.calc-form-group select { width: 100%; padding: 15px; background: #F3EDE0; color: #17171C; border: 1px solid #E8DFC8; border-radius: 5px; font-size: 16px; outline: none; transition: border-color 0.3s; }
+.calc-form-group select:focus { border-color: #C9A24A; }
 
-.calc-result-box { margin-top: 35px; padding: 25px; background: #1a1a1a; border-radius: 5px; border: 1px dashed #444; text-align: center; }
-.calc-result-box p { font-size: 14px; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-.calc-result-box h3 { font-size: 36px; color: #ffcc00; margin: 0; }
+.calc-result-box { margin-top: 35px; padding: 25px; background: #F3EDE0; border-radius: 5px; border: 1px dashed #D8CBA8; text-align: center; }
+.calc-result-box p { font-size: 14px; color: #8a8474; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.calc-result-box h3 { font-size: 36px; color: #B38A3A; margin: 0; }
 
 /* --- COPART DEAL OF THE DAY --- */
 .cotd-container {
     display: flex;
     flex-direction: column;
-    background: #121212;
+    background: #FFFFFF;
     border-radius: 8px;
-    border: 1px solid #333;
+    border: 1px solid #E8DFC8;
     overflow: hidden;
     max-width: 900px;
     margin: 0 auto;
@@ -339,60 +339,60 @@ body {
     text-align: left;
 }
 
-.cotd-details h3 { color: #ffffff; font-size: 24px; margin-bottom: 10px; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
-.cotd-specs p { color: #ccc; font-size: 14px; margin-bottom: 8px; }
-.cotd-specs strong { color: #888; text-transform: uppercase; letter-spacing: 1px; font-size: 12px; margin-right: 5px; }
+.cotd-details h3 { color: #17171C; font-size: 24px; margin-bottom: 10px; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
+.cotd-specs p { color: #4a463d; font-size: 14px; margin-bottom: 8px; }
+.cotd-specs strong { color: #8a8474; text-transform: uppercase; letter-spacing: 1px; font-size: 12px; margin-right: 5px; }
 
-.cotd-price-box { background: #1a1a1a; padding: 15px; border-left: 4px solid #ffcc00; margin-top: 10px; }
-.cotd-price-box p { font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 5px; letter-spacing: 1px; }
-.cotd-price-box h4 { font-size: 28px; color: #ffcc00; font-weight: 400; }
+.cotd-price-box { background: #F3EDE0; padding: 15px; border-left: 4px solid #B38A3A; margin-top: 10px; }
+.cotd-price-box p { font-size: 11px; text-transform: uppercase; color: #8a8474; margin-bottom: 5px; letter-spacing: 1px; }
+.cotd-price-box h4 { font-size: 28px; color: #B38A3A; font-weight: 400; }
 .cotd-btn { margin-top: 15px; width: 100%; }
 
 /* --- INQUIRY FORM --- */
 .inquiry-form-card {
-    background: #0a0a0a;
+    background: #FFFFFF;
     max-width: 750px;
     margin: 0 auto;
     padding: 40px;
     border-radius: 8px;
-    border: 1px solid #222;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border: 1px solid #E8DFC8;
+    box-shadow: 0 10px 30px rgba(23,23,28,0.08);
     text-align: left;
 }
 
 .form-header { text-align: center; margin-bottom: 30px; }
-.form-header h2 { color: #ffcc00; font-size: 28px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
-.form-header p { color: #888; font-size: 14px; }
+.form-header h2 { color: #B38A3A; font-size: 28px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+.form-header p { color: #8a8474; font-size: 14px; }
 
 .mai-inquiry-form .form-group { margin-bottom: 20px; }
-.mai-inquiry-form label { display: block; color: #ccc; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+.mai-inquiry-form label { display: block; color: #6b6558; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
 
 .mai-inquiry-form input,
 .mai-inquiry-form select,
 .mai-inquiry-form textarea {
     width: 100%;
     padding: 12px 15px;
-    border: 1px solid #333;
+    border: 1px solid #E8DFC8;
     border-radius: 5px;
-    background: #111;
+    background: #F3EDE0;
     font-size: 14px;
-    color: #fff;
+    color: #17171C;
     transition: 0.3s;
 }
 
 .mai-inquiry-form input:focus,
 .mai-inquiry-form select:focus,
 .mai-inquiry-form textarea:focus {
-    border-color: #ffcc00;
+    border-color: #B38A3A;
     outline: none;
-    background: #1a1a1a;
+    background: #FFFFFF;
 }
 
 .form-submit-btn {
     width: 100%;
     background: transparent;
-    color: #ffcc00;
-    border: 1px solid #ffcc00;
+    color: #B38A3A;
+    border: 1px solid #B38A3A;
     padding: 15px;
     font-size: 16px;
     font-weight: bold;
@@ -405,8 +405,8 @@ body {
 }
 
 .form-submit-btn:hover {
-    background: #ffcc00;
-    color: #000;
+    background: #B38A3A;
+    color: #FFFFFF;
 }
 
 /* ========================================= */
@@ -509,10 +509,10 @@ body {
 #bidPrice {
     width: 100%;
     padding: 15px;
-    background-color: rgba(255, 255, 255, 0.05); /* Subtle dark transparent background */
-    border: 1px solid rgba(255, 255, 255, 0.2);  /* Thin, muted border */
+    background-color: rgba(23, 23, 28, 0.04); /* Subtle warm transparent background */
+    border: 1px solid rgba(23, 23, 28, 0.15);  /* Thin, muted border */
     border-radius: 8px;                          /* Slightly rounded corners */
-    color: #fff;                                 /* Crisp white text */
+    color: #17171C;                                 /* Crisp dark text */
     font-size: 1.2rem;
     font-family: 'Montserrat', sans-serif;
     outline: none;
@@ -523,14 +523,14 @@ body {
 
 /* Hover state */
 #bidPrice:hover {
-    border-color: rgba(255, 204, 0, 0.5);        /* Glows slightly gold on hover */
+    border-color: rgba(179, 138, 58, 0.5);        /* Glows slightly gold on hover */
 }
 
 /* Focus state (when the user clicks inside) */
 #bidPrice:focus {
-    border-color: #ffcc00;                       /* Solid gold border */
-    background-color: rgba(255, 255, 255, 0.1);  /* Brightens slightly */
-    box-shadow: 0 0 15px rgba(255, 204, 0, 0.2); /* Soft gold outer glow */
+    border-color: #B38A3A;                       /* Solid gold border */
+    background-color: rgba(23, 23, 28, 0.06);  /* Deepens slightly */
+    box-shadow: 0 0 15px rgba(179, 138, 58, 0.2); /* Soft gold outer glow */
 }
 
 /* Hide the "ugly" up/down arrows (spinners) for a cleaner design */
