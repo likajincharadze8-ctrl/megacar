@@ -1,8 +1,8 @@
 /* ===== Mega Cars Import — Dealer Portal (brand redesign) ===== */
 :root{
-  --bg:#0E0E12; --sidebar:#121217; --panel:#16161C; --panel-2:#1C1C24;
-  --line:#2A2A33; --gold:#C9A24A; --gold-2:#dab65e; --gold-soft:rgba(201,162,74,.14);
-  --red:#BE3B30; --green:#46b46b; --text:#ECECEC; --muted:#9A9A9A;
+  --bg:#FAF6EE; --sidebar:#FFFFFF; --panel:#FFFFFF; --panel-2:#F3EDE0;
+  --line:#E8DFC8; --gold:#C9A24A; --gold-2:#B38A3A; --gold-soft:rgba(201,162,74,.16);
+  --red:#BE3B30; --green:#2F8F52; --text:#17171C; --muted:#8A8474;
   --radius:14px; --sidebar-w:258px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -26,25 +26,26 @@ a{color:inherit;text-decoration:none}
 
 .nav-menu{display:flex;flex-direction:column;gap:3px;margin-top:8px}
 .nav-cap{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:14px 12px 6px}
-.nav-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:#c7c7cf;font-size:14px;
+.nav-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:#5c584c;font-size:14px;
   cursor:pointer;transition:background .15s,color .15s;position:relative}
 .nav-link svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;opacity:.85}
-.nav-link:hover{background:var(--panel-2);color:#fff}
-.nav-link.active{background:var(--gold-soft);color:var(--gold)}
+.nav-link:hover{background:var(--panel-2);color:var(--text)}
+.nav-link.active{background:var(--gold-soft);color:var(--gold-2)}
 .nav-link.active::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--gold)}
 .nav-link .badge{margin-left:auto;background:var(--gold);color:#000;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
   min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 6px}
 .nav-link .badge.red{background:var(--red);color:#fff}
 .nav-soon{opacity:.55}
-.nav-soon:hover{background:transparent;color:#c7c7cf;cursor:not-allowed}
+.nav-soon:hover{background:transparent;color:#5c584c;cursor:not-allowed}
 .nav-bottom{margin-top:auto;padding-top:14px;border-top:1px solid var(--line)}
-.nav-link.logout{color:#d98a84}
-.nav-link.logout:hover{background:rgba(190,59,48,.14);color:#ff7a70}
+.nav-link.logout{color:#A83B32}
+.nav-link.logout:hover{background:rgba(190,59,48,.12);color:#8f2e27}
 
 /* main */
 .main-content{flex:1;min-width:0;display:flex;flex-direction:column}
 .top-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 30px;border-bottom:1px solid var(--line);
-  background:rgba(14,14,18,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:15}
+  background:rgba(250,246,238,.82);backdrop-filter:blur(8px);position:sticky;top:0;z-index:15;
+  background-image:repeating-linear-gradient(90deg,var(--line) 0 22px,transparent 22px 40px);background-size:100% 2px;background-position:bottom;background-repeat:no-repeat}
 .top-bar h1{font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:20px}
 .top-actions{display:flex;align-items:center;gap:16px}
 .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);
@@ -110,7 +111,7 @@ h3.sec-title{font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:2
 .news-item:last-child{border-bottom:none}
 .news-item .n-title{font-weight:600;margin-bottom:4px}
 .news-item .n-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:8px}
-.news-item .n-body{font-size:13px;color:#bdbdbd;line-height:1.6}
+.news-item .n-body{font-size:13px;color:#6b6558;line-height:1.6}
 
 /* forms */
 .add-car-form{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;max-width:920px}
