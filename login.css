@@ -5,17 +5,18 @@
     align-items: center;
     min-height: 100vh; /* This fills the whole screen height */
     width: 100%;
-    background: #000;
+    background: #FAF6EE;
 }
 
 .login-box {
-    background: #121212;
+    background: #FFFFFF;
     padding: 30px;
     border-radius: 12px;
     width: 90%; /* Wider on mobile */
     max-width: 400px;
-    border: 1px solid #222;
+    border: 1px solid #E8DFC8;
     text-align: center;
+    box-shadow: 0 8px 28px rgba(23,23,28,.06);
 }
 
 /* Make sure inputs don't zoom in on iPhone */
@@ -24,8 +25,8 @@ input[type="text"], input[type="password"] {
     width: 100%;
     padding: 12px;
     margin: 10px 0;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    color: #fff;
+    background: #F3EDE0;
+    border: 1px solid #E8DFC8;
+    color: #17171C;
     border-radius: 6px;
 }
