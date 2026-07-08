@@ -29,9 +29,11 @@
                 <a href="#" class="nav-link admin-only" id="tabAddCar"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>მანქანის დამატება</a>
                 <a href="#" class="nav-link admin-only" id="tabUsers"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M17 6a3 3 0 010 6"/></svg>მომხმარებლები</a>
 
+                <div class="nav-cap">ანგარიში</div>
+                <a href="#" class="nav-link" id="tabStats"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>სტატისტიკა</a>
+                <a href="#" class="nav-link" id="tabInvoices"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M6 3h9l3 3v15H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>ინვოისები</a>
+
                 <div class="nav-cap">მალე</div>
-                <a href="#" class="nav-link nav-soon" data-name="სტატისტიკა"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>სტატისტიკა</a>
-                <a href="#" class="nav-link nav-soon" data-name="ინვოისები"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M6 3h9l3 3v15H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>ინვოისები</a>
                 <a href="#" class="nav-link nav-soon" data-name="მოგების განაწილება"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 16l5-5 4 4 7-7"/><path d="M14 8h6v6"/></svg>მოგების განაწილება</a>
             </nav>
             <div class="nav-bottom">
@@ -172,6 +174,94 @@
                     </form>
                 </section>
 
+                <!-- ===== STATISTICS ===== -->
+                <section id="viewStats" class="view-section hidden">
+                    <h3 class="sec-title">სტატისტიკა</h3>
+
+                    <div class="stats-grid">
+                        <div class="card stat-card">
+                            <div class="c-head"><span class="c-label">ნაყიდი მანქანები</span></div>
+                            <div class="balance gold" id="statTotalCars">0</div>
+                            <div class="c-note">სულ თქვენს სახელზე რეგისტრირებული ავტომობილი</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="c-head"><span class="c-label">გზაში / განბაჟებაში</span></div>
+                            <div class="balance" id="statInTransit" style="color:var(--text)">0</div>
+                            <div class="c-note">სტატუსი: გზაში ან საბაჟოზე</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="c-head"><span class="c-label">ჩამოსული / გაყიდული</span></div>
+                            <div class="balance green" id="statDelivered">0</div>
+                            <div class="c-note">სტატუსი: ჩამოსული ან გაყიდული</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="margin-top:18px">
+                        <div class="card">
+                            <div class="c-head"><span class="c-label">ჯამური თანხები</span></div>
+                            <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+                                <div class="stat-row"><span>აუქციონი + ტრანსპორტირება</span><strong id="statTotalCost">$0</strong></div>
+                                <div class="stat-row"><span>გადახდილია</span><strong id="statTotalPaid" style="color:var(--green)">$0</strong></div>
+                                <div class="stat-row"><span>დარჩენილი ბალანსი</span><strong id="statTotalBalance" style="color:var(--red)">$0</strong></div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="c-head"><span class="c-label">სტატუსების განაწილება</span></div>
+                            <div id="statBreakdown" class="breakdown-list"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== INVOICES ===== -->
+                <section id="viewInvoices" class="view-section hidden">
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+                        <h3 class="sec-title" style="margin-bottom:0">ინვოისები</h3>
+                        <button id="newInvoiceBtn" class="btn-gold admin-only">+ ინვოისის შექმნა</button>
+                    </div>
+
+                    <form id="addInvoiceForm" class="add-car-form hidden" style="margin-bottom:22px">
+                        <div class="flex-row">
+                            <div class="form-group"><label>დილერი (username)</label><input type="text" id="invDealer" required></div>
+                            <div class="form-group"><label>მარკა, მოდელი</label><input type="text" id="invMakeModel"></div>
+                            <div class="form-group"><label>VIN კოდი</label><input type="text" id="invVin"></div>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>მიმღების სახელი</label><input type="text" id="invRecFirst"></div>
+                            <div class="form-group"><label>მიმღების გვარი</label><input type="text" id="invRecLast"></div>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>ჯამური თანხა ($)</label><input type="number" id="invTotal" value="0" required></div>
+                            <div class="form-group"><label>გადახდილია ($)</label><input type="number" id="invPaid" value="0" required></div>
+                        </div>
+                        <div class="form-group"><label>აღწერა</label><input type="text" id="invDescription"></div>
+                        <div style="display:flex;gap:10px">
+                            <button type="submit" class="btn-primary">ინვოისის შენახვა</button>
+                            <button type="button" id="cancelInvoiceBtn" class="btn-primary" style="background:var(--panel-2);color:var(--text);border:1px solid var(--line)">გაუქმება</button>
+                        </div>
+                    </form>
+
+                    <div class="card" style="padding:0;overflow-x:auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ინვოისი #</th>
+                                    <th class="admin-only">დილერი</th>
+                                    <th>მანქანა</th>
+                                    <th>ჯამი</th>
+                                    <th>გადახდილი</th>
+                                    <th>ბალანსი</th>
+                                    <th>სტატუსი</th>
+                                    <th>თარიღი</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoicesTableBody">
+                                <tr><td colspan="9" class="table-empty">იტვირთება…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
                 <!-- ===== SOON placeholder ===== -->
                 <section id="viewSoon" class="view-section hidden">
                     <div class="soon-box">
@@ -198,12 +288,12 @@
       ready(function(){
         var vOverview=document.getElementById('viewOverview');
         var tabOverview=document.getElementById('tabOverview');
-        var hideIds=['viewGarage','viewAddCar','viewUsers','viewSoon'];
+        var hideIds=['viewGarage','viewAddCar','viewUsers','viewStats','viewInvoices','viewSoon'];
         function hideAll(){hideIds.forEach(function(id){var s=document.getElementById(id);if(s)s.classList.add('hidden');});}
         function clearActive(){document.querySelectorAll('.nav-link').forEach(function(l){l.classList.remove('active');});}
         function showOverview(){hideAll();if(vOverview)vOverview.classList.remove('hidden');clearActive();if(tabOverview)tabOverview.classList.add('active');}
         if(tabOverview)tabOverview.addEventListener('click',function(e){e.preventDefault();showOverview();});
-        ['tabGarage','tabAddCar','tabUsers'].forEach(function(id){var t=document.getElementById(id);if(t)t.addEventListener('click',function(){if(vOverview)vOverview.classList.add('hidden');var sv=document.getElementById('viewSoon');if(sv)sv.classList.add('hidden');});});
+        ['tabGarage','tabAddCar','tabUsers','tabStats','tabInvoices'].forEach(function(id){var t=document.getElementById(id);if(t)t.addEventListener('click',function(){if(vOverview)vOverview.classList.add('hidden');var sv=document.getElementById('viewSoon');if(sv)sv.classList.add('hidden');});});
         document.querySelectorAll('.nav-soon').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();hideAll();if(vOverview)vOverview.classList.add('hidden');var sv=document.getElementById('viewSoon');if(sv){sv.classList.remove('hidden');document.getElementById('soonName').textContent=l.getAttribute('data-name')||'';}clearActive();l.classList.add('active');});});
         var qa=document.getElementById('qaAddCar');if(qa)qa.addEventListener('click',function(e){e.preventDefault();var t=document.getElementById('tabAddCar');if(t)t.click();});
         var qg=document.getElementById('qaCars');if(qg)qg.addEventListener('click',function(e){e.preventDefault();var t=document.getElementById('tabGarage');if(t)t.click();});

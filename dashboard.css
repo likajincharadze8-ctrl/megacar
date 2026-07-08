@@ -148,6 +148,44 @@ h3.sec-title{font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:2
 .hamburger-menu{background:none;border:none;display:flex;flex-direction:column;gap:5px;cursor:pointer;padding:6px}
 .hamburger-menu span{width:24px;height:2px;background:var(--text);border-radius:2px}
 
+/* statistics */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.stat-card .balance{font-size:30px}
+.stat-row{display:flex;align-items:center;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.stat-row:last-child{border-bottom:none}
+.breakdown-list{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+.breakdown-row{display:grid;grid-template-columns:96px 1fr 28px;align-items:center;gap:10px;font-size:13px}
+.breakdown-label{color:var(--muted)}
+.breakdown-track{height:8px;border-radius:6px;background:var(--panel-2);overflow:hidden}
+.breakdown-fill{height:100%;background:var(--gold);border-radius:6px;transition:width .3s}
+.breakdown-count{font-family:'JetBrains Mono',monospace;text-align:right;color:var(--text);font-weight:600}
+
+/* invoices table */
+.data-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.data-table th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.data-table td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--panel-2)}
+.data-table .mono{font-family:'JetBrains Mono',monospace;font-size:12.5px}
+.table-empty{text-align:center;color:var(--muted);padding:28px!important}
+
+.status-badge{display:inline-block;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.badge-paid{background:rgba(47,143,82,.14);color:var(--green)}
+.badge-partial{background:var(--gold-soft);color:var(--gold-2)}
+.badge-unpaid{background:rgba(190,59,48,.12);color:var(--red)}
+
+.btn-sm{padding:7px 14px;font-size:12.5px;border-radius:7px}
+.icon-btn-sm{width:30px;height:30px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--muted);
+  cursor:pointer;font-size:16px;line-height:1;margin-left:8px}
+.icon-btn-sm.danger:hover{background:rgba(190,59,48,.12);color:var(--red);border-color:var(--red)}
+
+@media(max-width:768px){
+  .stats-grid{grid-template-columns:1fr}
+  .data-table{font-size:12.5px}
+  .data-table th,.data-table td{padding:10px 12px}
+}
+
 /* placeholder soon view */
 .soon-box{background:var(--panel);border:1px dashed var(--line);border-radius:var(--radius);padding:48px;text-align:center;color:var(--muted)}
 .soon-box .s-ico{font-size:34px;margin-bottom:12px}
