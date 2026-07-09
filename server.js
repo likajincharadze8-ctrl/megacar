@@ -373,10 +373,16 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
         doc.pipe(res);
 
         // Georgian font (for bank names / recipient ID label — base PDF fonts don't support Georgian)
+        let georgianFontFailed = null;
         try {
-            doc.registerFont('Geo', path.join(__dirname, 'fonts', 'NotoSansGeorgian-Regular.ttf'));
-            doc.registerFont('GeoBold', path.join(__dirname, 'fonts', 'NotoSansGeorgian-Bold.ttf'));
+            const regPath = path.join(__dirname, 'fonts', 'NotoSansGeorgian-Regular.ttf');
+            const boldPath = path.join(__dirname, 'fonts', 'NotoSansGeorgian-Bold.ttf');
+            if (!fs.existsSync(regPath)) throw new Error(`File not found at ${regPath}`);
+            if (!fs.existsSync(boldPath)) throw new Error(`File not found at ${boldPath}`);
+            doc.registerFont('Geo', regPath);
+            doc.registerFont('GeoBold', boldPath);
         } catch (fontErr) {
+            georgianFontFailed = fontErr.message;
             console.error('Georgian font failed to load, falling back to Helvetica:', fontErr.message);
             doc.registerFont('Geo', 'Helvetica');
             doc.registerFont('GeoBold', 'Helvetica-Bold');
@@ -394,6 +400,11 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
         doc.fillColor(GOLD).fontSize(26).text('MEGA CARS IMPORT', left, 35, { align: 'left' });
         doc.fillColor('#FFFFFF').fontSize(10).text('Car Import from USA to Georgia  •  Copart & IAAI', left, 68);
         doc.fillColor(GOLD).fontSize(9).text('megacar.ge  •  +995 557 936 618', left, 84);
+
+        if (georgianFontFailed) {
+            doc.fillColor('#FF4444').font('Helvetica-Bold').fontSize(7.5)
+                .text(`FONT LOAD ERROR (send this to support): ${georgianFontFailed}`, left, 112, { width: pageWidth - 100 });
+        }
 
         // Bank requisites (top-right of header band)
         const bankBoxW = 230;
@@ -417,8 +428,9 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
 
         // Bill To box
         doc.fillColor(OBSIDIAN).fontSize(12).text('BILL TO', right - 200, 140, { width: 200, align: 'right' });
-        doc.fillColor('#333333').fontSize(11)
-            .text(`${invoice.recipientFirstName || ''} ${invoice.recipientLastName || ''}`.trim() || '—', right - 200, 160, { width: 200, align: 'right' })
+        doc.font('Geo').fillColor('#333333').fontSize(11)
+            .text(`${invoice.recipientFirstName || ''} ${invoice.recipientLastName || ''}`.trim() || '—', right - 200, 160, { width: 200, align: 'right' });
+        doc.font('Helvetica').fillColor('#333333').fontSize(11)
             .text(`Dealer: ${invoice.dealerId}`, right - 200, 176, { width: 200, align: 'right' });
         if (invoice.recipientId) {
             doc.font('Geo').fillColor('#333333').fontSize(10)
