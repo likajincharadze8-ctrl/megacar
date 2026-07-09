@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dealer | Login</title>
     <link rel="stylesheet" href="dashboard.css">
 </head>
@@ -28,6 +29,8 @@
         const show = () => passInput.type = 'text';
         const hide = () => passInput.type = 'password';
         toggleBtn.onmousedown = show; toggleBtn.onmouseup = hide; toggleBtn.onmouseleave = hide;
+        toggleBtn.ontouchstart = (e) => { e.preventDefault(); show(); };
+        toggleBtn.ontouchend = (e) => { e.preventDefault(); hide(); };
 
         // Login Submit
         document.getElementById('loginForm').addEventListener('submit', async (e) => {

@@ -12,6 +12,7 @@ const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
 const app = express(); 
+app.set('trust proxy', 1); // Render terminates TLS at its edge; this makes req.secure accurate
 
 const User = require('./Models/User');
 const Car = require('./Models/Car');
@@ -130,8 +131,8 @@ app.post('/api/auth/login', async (req, res) => {
 
         res.cookie('mai_token', token, {
             httpOnly: true, 
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: 'strict', 
+            secure: req.secure, 
+            sameSite: 'lax', 
             maxAge: 8 * 60 * 60 * 1000 
         });
 
