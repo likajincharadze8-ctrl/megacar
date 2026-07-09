@@ -21,14 +21,18 @@ document.addEventListener('DOMContentLoaded', function() {
         addCar: document.getElementById('tabAddCar'), 
         users: document.getElementById('tabUsers'),
         stats: document.getElementById('tabStats'),
-        invoices: document.getElementById('tabInvoices')
+        invoices: document.getElementById('tabInvoices'),
+        financing: document.getElementById('tabFinancing'),
+        profitShare: document.getElementById('tabProfitShare')
     };
     const views = { 
         garage: document.getElementById('viewGarage'), 
         addCar: document.getElementById('viewAddCar'), 
         users: document.getElementById('viewUsers'),
         stats: document.getElementById('viewStats'),
-        invoices: document.getElementById('viewInvoices')
+        invoices: document.getElementById('viewInvoices'),
+        financing: document.getElementById('viewFinancing'),
+        profitShare: document.getElementById('viewProfitShare')
     };
 
     // Invoices DOM
@@ -36,6 +40,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const addInvoiceForm = document.getElementById('addInvoiceForm');
     const newInvoiceBtn = document.getElementById('newInvoiceBtn');
     const cancelInvoiceBtn = document.getElementById('cancelInvoiceBtn');
+
+    // Financing DOM
+    const financingTableBody = document.getElementById('financingTableBody');
+    const addFinancingForm = document.getElementById('addFinancingForm');
+    const newFinancingBtn = document.getElementById('newFinancingBtn');
+    const cancelFinancingBtn = document.getElementById('cancelFinancingBtn');
+
+    // Profit Share DOM
+    const profitShareTableBody = document.getElementById('profitShareTableBody');
+    const addProfitShareForm = document.getElementById('addProfitShareForm');
+    const newProfitShareBtn = document.getElementById('newProfitShareBtn');
+    const cancelProfitShareBtn = document.getElementById('cancelProfitShareBtn');
 
     const carModal = document.getElementById('carModal');
     const closeModal = document.getElementById('closeModal');
@@ -73,6 +89,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (name === 'garage') loadCars();
         if (name === 'stats') loadStats();
         if (name === 'invoices') loadInvoices();
+        if (name === 'financing') loadFinancing();
+        if (name === 'profitShare') loadProfitShares();
     }
 
     if (tabs.garage) tabs.garage.onclick = (e) => { e.preventDefault(); showSection('garage'); };
@@ -80,6 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tabs.users) tabs.users.onclick = (e) => { e.preventDefault(); showSection('users'); };
     if (tabs.stats) tabs.stats.onclick = (e) => { e.preventDefault(); showSection('stats'); };
     if (tabs.invoices) tabs.invoices.onclick = (e) => { e.preventDefault(); showSection('invoices'); };
+    if (tabs.financing) tabs.financing.onclick = (e) => { e.preventDefault(); showSection('financing'); };
+    if (tabs.profitShare) tabs.profitShare.onclick = (e) => { e.preventDefault(); showSection('profitShare'); };
 
     // 4. GLOBAL API FUNCTIONS (Attached explicitly to window so buttons can find them)
     window.deleteCar = async (id) => {
@@ -400,6 +420,232 @@ document.addEventListener('DOMContentLoaded', function() {
             addInvoiceForm.reset();
             addInvoiceForm.classList.add('hidden');
             loadInvoices();
+        };
+    }
+
+    // 5d. CO-FINANCING
+    async function loadFinancing() {
+        if (!financingTableBody) return;
+        financingTableBody.innerHTML = '<tr><td colspan="9" class="table-empty">იტვირთება…</td></tr>';
+        try {
+            const res = await fetch('/api/financings');
+            const payload = await res.json().catch(() => null);
+            if (!res.ok) throw new Error(payload?.error || 'Failed to load financings');
+            const records = Array.isArray(payload) ? payload : [];
+
+            const totalCount = records.length;
+            const totalAmount = records.reduce((s, r) => s + (r.financedAmount || 0), 0);
+            const outstanding = records.reduce((s, r) => s + Math.max(0, (r.financedAmount || 0) - (r.amountRepaid || 0)), 0);
+            const activeCount = records.filter(r => r.status === 'Active').length;
+            const paidOffCount = records.filter(r => r.status === 'Paid Off').length;
+
+            const elCount = document.getElementById('finTotalCount');
+            const elAmount = document.getElementById('finTotalAmount');
+            const elOutstanding = document.getElementById('finOutstanding');
+            const elActive = document.getElementById('finActiveCount');
+            const elPaidOff = document.getElementById('finPaidOffCount');
+            if (elCount) elCount.textContent = totalCount;
+            if (elAmount) elAmount.textContent = '$' + totalAmount.toLocaleString();
+            if (elOutstanding) elOutstanding.textContent = '$' + outstanding.toLocaleString();
+            if (elActive) elActive.textContent = activeCount;
+            if (elPaidOff) elPaidOff.textContent = paidOffCount;
+
+            if (records.length === 0) {
+                financingTableBody.innerHTML = '<tr><td colspan="9" class="table-empty">ჩანაწერები ჯერ არ არსებობს.</td></tr>';
+                return;
+            }
+
+            financingTableBody.innerHTML = records.map(r => {
+                const remaining = Math.max(0, (r.financedAmount || 0) - (r.amountRepaid || 0));
+                const badgeClass = r.status === 'Paid Off' ? 'badge-paid' : 'badge-partial';
+                const statusLabel = r.status === 'Paid Off' ? 'დაფარული' : 'აქტიური';
+                const adminCell = role === 'admin' ? `<td>${r.dealerId}</td>` : '';
+                const feeLabel = `$${(r.fixedFee || 0).toLocaleString()}${r.feePaid ? ' ✓' : ''}`;
+                const actions = role === 'admin' ? `
+                    <button class="btn-outline btn-sm" onclick="window.addFinancingPayment('${r._id}', ${remaining})">+ გადახდა</button>
+                    <button class="icon-btn-sm danger" title="წაშლა" onclick="window.deleteFinancing('${r._id}')">&times;</button>
+                ` : '';
+                return `<tr>
+                    <td class="mono">${r.vin || '—'}</td>
+                    <td>${r.carInfo || '—'}</td>
+                    ${adminCell}
+                    <td>$${(r.financedAmount || 0).toLocaleString()}</td>
+                    <td>$${(r.amountRepaid || 0).toLocaleString()}</td>
+                    <td style="color:${remaining > 0 ? 'var(--red)' : 'var(--green)'}">$${remaining.toLocaleString()}</td>
+                    <td>${feeLabel}</td>
+                    <td><span class="status-badge ${badgeClass}">${statusLabel}</span></td>
+                    <td style="white-space:nowrap">${actions}</td>
+                </tr>`;
+            }).join('');
+        } catch (err) {
+            console.error('Failed to load financing records.', err);
+            financingTableBody.innerHTML = '<tr><td colspan="9" class="table-empty" style="color:var(--red)">ჩატვირთვა ვერ მოხერხდა.</td></tr>';
+        }
+    }
+
+    window.addFinancingPayment = async (id, remaining) => {
+        const input = prompt(`დარჩენილია: $${remaining}. რა თანხა დაბრუნდა ახლა?`, '');
+        if (input === null) return;
+        const amount = Number(input);
+        if (!amount || amount <= 0) return;
+        // Fetch fresh state first so the repayment adds on top of the latest known amount
+        const listRes = await fetch('/api/financings');
+        const list = await listRes.json().catch(() => []);
+        const current = (Array.isArray(list) ? list : []).find(r => r._id === id);
+        if (!current) return alert('ჩანაწერი ვერ მოიძებნა.');
+        const newRepaid = (current.amountRepaid || 0) + amount;
+        const res = await fetch(`/api/financings/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amountRepaid: newRepaid })
+        });
+        if (!res.ok) { alert('გადახდის დამატება ვერ მოხერხდა.'); return; }
+        loadFinancing();
+    };
+
+    window.deleteFinancing = async (id) => {
+        if (!confirm('ჩანაწერის წაშლა? ეს მოქმედება შეუქცევადია.')) return;
+        await fetch(`/api/financings/${id}`, { method: 'DELETE' });
+        loadFinancing();
+    };
+
+    if (newFinancingBtn) newFinancingBtn.onclick = () => addFinancingForm?.classList.toggle('hidden');
+    if (cancelFinancingBtn) cancelFinancingBtn.onclick = () => addFinancingForm?.classList.add('hidden');
+
+    if (addFinancingForm) {
+        addFinancingForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const body = {
+                dealerId: document.getElementById('finDealer').value,
+                carInfo: document.getElementById('finCarInfo').value,
+                vin: document.getElementById('finVin').value,
+                financedAmount: document.getElementById('finAmount').value,
+                amountRepaid: document.getElementById('finRepaid').value,
+                fixedFee: document.getElementById('finFee').value,
+                financedDate: document.getElementById('finDate').value
+            };
+            const res = await fetch('/api/financings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const payload = await res.json().catch(() => null);
+            if (!res.ok) { alert(payload?.error || 'ვერ შეინახა.'); return; }
+            addFinancingForm.reset();
+            document.getElementById('finFee').value = 200;
+            addFinancingForm.classList.add('hidden');
+            loadFinancing();
+        };
+    }
+
+    // 5e. PROFIT SHARE
+    async function loadProfitShares() {
+        if (!profitShareTableBody) return;
+        profitShareTableBody.innerHTML = '<tr><td colspan="8" class="table-empty">იტვირთება…</td></tr>';
+        try {
+            const res = await fetch('/api/profit-shares');
+            const payload = await res.json().catch(() => null);
+            if (!res.ok) throw new Error(payload?.error || 'Failed to load profit shares');
+            const records = Array.isArray(payload) ? payload : [];
+
+            const totalProfit = records.reduce((s, r) => s + (r.totalProfit || 0), 0);
+            const companyTotal = records.reduce((s, r) => s + (r.companyAmount || 0), 0);
+            const dealerTotal = records.reduce((s, r) => s + (r.dealerAmount || 0), 0);
+
+            const elProfit = document.getElementById('psTotalProfit');
+            const elCompany = document.getElementById('psCompanyTotal');
+            const elDealer = document.getElementById('psDealerTotal');
+            if (elProfit) elProfit.textContent = '$' + totalProfit.toLocaleString();
+            if (elCompany) elCompany.textContent = '$' + companyTotal.toLocaleString();
+            if (elDealer) elDealer.textContent = '$' + dealerTotal.toLocaleString();
+
+            if (records.length === 0) {
+                profitShareTableBody.innerHTML = '<tr><td colspan="8" class="table-empty">ჩანაწერები ჯერ არ არსებობს.</td></tr>';
+                return;
+            }
+
+            profitShareTableBody.innerHTML = records.map(r => {
+                const badgeClass = r.status === 'Paid' ? 'badge-paid' : 'badge-partial';
+                const statusLabel = r.status === 'Paid' ? 'გადახდილი' : 'მოლოდინში';
+                const adminCell = role === 'admin' ? `<td>${r.dealerId}</td>` : '';
+                const actions = role === 'admin' ? `
+                    ${r.status !== 'Paid' ? `<button class="btn-outline btn-sm" onclick="window.markProfitSharePaid('${r._id}')">გადახდილად მონიშვნა</button>` : ''}
+                    <button class="icon-btn-sm danger" title="წაშლა" onclick="window.deleteProfitShare('${r._id}')">&times;</button>
+                ` : '';
+                return `<tr>
+                    <td class="mono">${r.vin || '—'}</td>
+                    <td>${r.carInfo || '—'}</td>
+                    ${adminCell}
+                    <td>$${(r.totalProfit || 0).toLocaleString()}</td>
+                    <td>$${(r.companyAmount || 0).toLocaleString()} <span style="color:var(--muted);font-size:11px">(${r.companyPercent}%)</span></td>
+                    <td>$${(r.dealerAmount || 0).toLocaleString()} <span style="color:var(--muted);font-size:11px">(${r.dealerPercent}%)</span></td>
+                    <td><span class="status-badge ${badgeClass}">${statusLabel}</span></td>
+                    <td style="white-space:nowrap">${actions}</td>
+                </tr>`;
+            }).join('');
+        } catch (err) {
+            console.error('Failed to load profit shares.', err);
+            profitShareTableBody.innerHTML = '<tr><td colspan="8" class="table-empty" style="color:var(--red)">ჩატვირთვა ვერ მოხერხდა.</td></tr>';
+        }
+    }
+
+    window.markProfitSharePaid = async (id) => {
+        const res = await fetch(`/api/profit-shares/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'Paid' })
+        });
+        if (!res.ok) { alert('ვერ განახლდა.'); return; }
+        loadProfitShares();
+    };
+
+    window.deleteProfitShare = async (id) => {
+        if (!confirm('ჩანაწერის წაშლა? ეს მოქმედება შეუქცევადია.')) return;
+        await fetch(`/api/profit-shares/${id}`, { method: 'DELETE' });
+        loadProfitShares();
+    };
+
+    if (newProfitShareBtn) newProfitShareBtn.onclick = () => addProfitShareForm?.classList.toggle('hidden');
+    if (cancelProfitShareBtn) cancelProfitShareBtn.onclick = () => addProfitShareForm?.classList.add('hidden');
+
+    // Keep company/dealer percentages in sync (auto-complete to 100)
+    const psCompanyPctInput = document.getElementById('psCompanyPct');
+    const psDealerPctInput = document.getElementById('psDealerPct');
+    if (psCompanyPctInput && psDealerPctInput) {
+        psCompanyPctInput.addEventListener('input', () => {
+            const v = Number(psCompanyPctInput.value) || 0;
+            psDealerPctInput.value = Math.max(0, 100 - v);
+        });
+        psDealerPctInput.addEventListener('input', () => {
+            const v = Number(psDealerPctInput.value) || 0;
+            psCompanyPctInput.value = Math.max(0, 100 - v);
+        });
+    }
+
+    if (addProfitShareForm) {
+        addProfitShareForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const body = {
+                dealerId: document.getElementById('psDealer').value,
+                carInfo: document.getElementById('psCarInfo').value,
+                vin: document.getElementById('psVin').value,
+                totalProfit: document.getElementById('psProfit').value,
+                companyPercent: document.getElementById('psCompanyPct').value,
+                dealerPercent: document.getElementById('psDealerPct').value,
+                saleDate: document.getElementById('psDate').value
+            };
+            const res = await fetch('/api/profit-shares', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const payload = await res.json().catch(() => null);
+            if (!res.ok) { alert(payload?.error || 'ვერ შეინახა.'); return; }
+            addProfitShareForm.reset();
+            document.getElementById('psCompanyPct').value = 50;
+            document.getElementById('psDealerPct').value = 50;
+            addProfitShareForm.classList.add('hidden');
+            loadProfitShares();
         };
     }
 

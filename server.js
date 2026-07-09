@@ -17,6 +17,8 @@ app.set('trust proxy', 1); // Render terminates TLS at its edge; this makes req.
 const User = require('./Models/User');
 const Car = require('./Models/Car');
 const Invoice = require('./Models/Invoice');
+const Financing = require('./Models/Financing');
+const ProfitShare = require('./Models/ProfitShare');
 
 // --- 1. SECURITY & MIDDLEWARE ---
 app.use(cookieParser());
@@ -507,6 +509,169 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
     } catch (error) {
         console.error("PDF generation error:", error);
         res.status(500).json({ error: "Failed to generate PDF" });
+    }
+});
+
+// --- 8b. CO-FINANCING ROUTES ---
+
+// GET financings: admin sees all, dealer sees only their own
+app.get('/api/financings', requireAuth, async (req, res) => {
+    try {
+        let financings;
+        if (String(req.user.role || '').toLowerCase() === 'admin') {
+            financings = await Financing.find().sort({ createdAt: -1 });
+        } else {
+            financings = await Financing.find({ dealerId: req.user.username }).sort({ createdAt: -1 });
+        }
+        res.json(financings);
+    } catch (error) {
+        console.error("Error fetching financings:", error);
+        res.status(500).json({ error: "Failed to fetch financings" });
+    }
+});
+
+// CREATE financing (admin only)
+app.post('/api/financings', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { dealerId, vin, carInfo, financedAmount, amountRepaid, fixedFee, feePaid, financedDate, notes } = req.body;
+        if (!dealerId) return res.status(400).json({ error: 'Dealer is required.' });
+
+        const financed = Number(financedAmount) || 0;
+        const repaid = Number(amountRepaid) || 0;
+        const fee = fixedFee !== undefined && fixedFee !== '' ? Number(fixedFee) : 200;
+        const status = repaid >= financed && financed > 0 ? 'Paid Off' : 'Active';
+
+        const newFinancing = new Financing({
+            dealerId: String(dealerId).trim(),
+            vin, carInfo,
+            financedAmount: financed,
+            amountRepaid: repaid,
+            fixedFee: fee,
+            feePaid: !!feePaid,
+            financedDate,
+            notes,
+            status
+        });
+
+        await newFinancing.save();
+        res.status(201).json(newFinancing);
+    } catch (error) {
+        console.error("Error creating financing:", error);
+        res.status(400).json({ error: "Error creating financing.", details: error.message });
+    }
+});
+
+// UPDATE financing (admin only) — e.g. record a repayment, mark fee paid
+app.put('/api/financings/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { financedAmount, amountRepaid, fixedFee, feePaid, notes, status } = req.body;
+        const financing = await Financing.findById(req.params.id);
+        if (!financing) return res.status(404).json({ error: "Financing not found" });
+
+        if (financedAmount !== undefined) financing.financedAmount = Number(financedAmount) || 0;
+        if (amountRepaid !== undefined) financing.amountRepaid = Number(amountRepaid) || 0;
+        if (fixedFee !== undefined) financing.fixedFee = Number(fixedFee) || 0;
+        if (feePaid !== undefined) financing.feePaid = !!feePaid;
+        if (notes !== undefined) financing.notes = notes;
+
+        financing.status = status || (financing.amountRepaid >= financing.financedAmount && financing.financedAmount > 0 ? 'Paid Off' : 'Active');
+
+        await financing.save();
+        res.json(financing);
+    } catch (error) {
+        console.error("Error updating financing:", error);
+        res.status(400).json({ error: "Error updating financing.", details: error.message });
+    }
+});
+
+// DELETE financing (admin only)
+app.delete('/api/financings/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const financing = await Financing.findByIdAndDelete(req.params.id);
+        if (!financing) return res.status(404).json({ error: "Financing not found" });
+        res.json({ message: "Financing deleted" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to delete financing" });
+    }
+});
+
+// --- 8c. PROFIT SHARE ROUTES ---
+
+// GET profit shares: admin sees all, dealer sees only their own
+app.get('/api/profit-shares', requireAuth, async (req, res) => {
+    try {
+        let shares;
+        if (String(req.user.role || '').toLowerCase() === 'admin') {
+            shares = await ProfitShare.find().sort({ createdAt: -1 });
+        } else {
+            shares = await ProfitShare.find({ dealerId: req.user.username }).sort({ createdAt: -1 });
+        }
+        res.json(shares);
+    } catch (error) {
+        console.error("Error fetching profit shares:", error);
+        res.status(500).json({ error: "Failed to fetch profit shares" });
+    }
+});
+
+// CREATE profit share (admin only)
+app.post('/api/profit-shares', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { dealerId, vin, carInfo, totalProfit, companyPercent, dealerPercent, saleDate, notes } = req.body;
+        if (!dealerId) return res.status(400).json({ error: 'Dealer is required.' });
+
+        const profit = Number(totalProfit) || 0;
+        let compPct = companyPercent !== undefined && companyPercent !== '' ? Number(companyPercent) : 50;
+        let dealPct = dealerPercent !== undefined && dealerPercent !== '' ? Number(dealerPercent) : (100 - compPct);
+        if (compPct + dealPct !== 100) dealPct = 100 - compPct; // keep split consistent
+
+        const companyAmount = Math.round((profit * compPct / 100) * 100) / 100;
+        const dealerAmount = Math.round((profit * dealPct / 100) * 100) / 100;
+
+        const newShare = new ProfitShare({
+            dealerId: String(dealerId).trim(),
+            vin, carInfo,
+            totalProfit: profit,
+            companyPercent: compPct,
+            dealerPercent: dealPct,
+            companyAmount, dealerAmount,
+            saleDate, notes,
+            status: 'Pending'
+        });
+
+        await newShare.save();
+        res.status(201).json(newShare);
+    } catch (error) {
+        console.error("Error creating profit share:", error);
+        res.status(400).json({ error: "Error creating profit share.", details: error.message });
+    }
+});
+
+// UPDATE profit share (admin only) — e.g. mark as paid
+app.put('/api/profit-shares/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { status, notes } = req.body;
+        const share = await ProfitShare.findById(req.params.id);
+        if (!share) return res.status(404).json({ error: "Profit share not found" });
+
+        if (status !== undefined) share.status = status;
+        if (notes !== undefined) share.notes = notes;
+
+        await share.save();
+        res.json(share);
+    } catch (error) {
+        console.error("Error updating profit share:", error);
+        res.status(400).json({ error: "Error updating profit share.", details: error.message });
+    }
+});
+
+// DELETE profit share (admin only)
+app.delete('/api/profit-shares/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const share = await ProfitShare.findByIdAndDelete(req.params.id);
+        if (!share) return res.status(404).json({ error: "Profit share not found" });
+        res.json({ message: "Profit share deleted" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to delete profit share" });
     }
 });
 

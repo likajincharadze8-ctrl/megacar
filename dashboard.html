@@ -32,9 +32,8 @@
                 <div class="nav-cap">ანგარიში</div>
                 <a href="#" class="nav-link" id="tabStats"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>სტატისტიკა</a>
                 <a href="#" class="nav-link" id="tabInvoices"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M6 3h9l3 3v15H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>ინვოისები</a>
-
-                <div class="nav-cap">მალე</div>
-                <a href="#" class="nav-link nav-soon" data-name="მოგების განაწილება"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 16l5-5 4 4 7-7"/><path d="M14 8h6v6"/></svg>მოგების განაწილება</a>
+                <a href="#" class="nav-link" id="tabFinancing"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/></svg>თანადაფინანსება</a>
+                <a href="#" class="nav-link" id="tabProfitShare"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 16l5-5 4 4 7-7"/><path d="M14 8h6v6"/></svg>მოგების განაწილება</a>
             </nav>
             <div class="nav-bottom">
                 <a href="#" class="nav-link logout"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M14 4h4v16h-4"/><path d="M10 12H3M6 8l-4 4 4 4"/></svg>გამოსვლა</a>
@@ -263,6 +262,117 @@
                     </div>
                 </section>
 
+                <!-- ===== CO-FINANCING ===== -->
+                <section id="viewFinancing" class="view-section hidden">
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+                        <h3 class="sec-title" style="margin-bottom:0">თანადაფინანსება</h3>
+                        <button id="newFinancingBtn" class="btn-gold admin-only">+ დაფინანსების დამატება</button>
+                    </div>
+
+                    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
+                        <div class="card stat-card"><div class="c-head"><span class="c-label">სულ დაფინანსება</span></div><div class="balance gold" id="finTotalCount">0</div></div>
+                        <div class="card stat-card"><div class="c-head"><span class="c-label">ჯამური თანხა</span></div><div class="balance" style="color:var(--text)" id="finTotalAmount">$0</div></div>
+                        <div class="card stat-card"><div class="c-head"><span class="c-label">დარჩენილი</span></div><div class="balance" id="finOutstanding" style="color:var(--red)">$0</div></div>
+                        <div class="card stat-card"><div class="c-head"><span class="c-label">აქტიური</span></div><div class="balance green" id="finActiveCount">0</div></div>
+                        <div class="card stat-card"><div class="c-head"><span class="c-label">დაფარული</span></div><div class="balance" style="color:var(--muted)" id="finPaidOffCount">0</div></div>
+                    </div>
+
+                    <form id="addFinancingForm" class="add-car-form hidden" style="margin-top:22px">
+                        <div class="flex-row">
+                            <div class="form-group"><label>დილერი (username)</label><input type="text" id="finDealer" required></div>
+                            <div class="form-group"><label>მარკა, მოდელი</label><input type="text" id="finCarInfo"></div>
+                            <div class="form-group"><label>VIN კოდი</label><input type="text" id="finVin"></div>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>დაფინანსებული თანხა ($)</label><input type="number" id="finAmount" placeholder="0" required></div>
+                            <div class="form-group"><label>უკვე დაბრუნებული ($)</label><input type="number" id="finRepaid" placeholder="0"></div>
+                            <div class="form-group"><label>ფიქსირებული საკომისიო ($)</label><input type="number" id="finFee" value="200"></div>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>თარიღი</label><input type="date" id="finDate"></div>
+                        </div>
+                        <div style="display:flex;gap:10px">
+                            <button type="submit" class="btn-primary">შენახვა</button>
+                            <button type="button" id="cancelFinancingBtn" class="btn-primary" style="background:var(--panel-2);color:var(--text);border:1px solid var(--line)">გაუქმება</button>
+                        </div>
+                    </form>
+
+                    <div class="card" style="padding:0;overflow-x:auto;margin-top:18px">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>VIN</th>
+                                    <th>მანქანა</th>
+                                    <th class="admin-only">დილერი</th>
+                                    <th>დაფინანსდა</th>
+                                    <th>დაბრუნდა</th>
+                                    <th>დარჩენილი</th>
+                                    <th>საკომისიო</th>
+                                    <th>სტატუსი</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="financingTableBody">
+                                <tr><td colspan="9" class="table-empty">იტვირთება…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ===== PROFIT SHARE ===== -->
+                <section id="viewProfitShare" class="view-section hidden">
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+                        <h3 class="sec-title" style="margin-bottom:0">მოგების განაწილება</h3>
+                        <button id="newProfitShareBtn" class="btn-gold admin-only">+ ჩანაწერის დამატება</button>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="card stat-card"><div class="c-head"><span class="c-label">სულ მოგება</span></div><div class="balance gold" id="psTotalProfit">$0</div></div>
+                        <div class="card stat-card"><div class="c-head"><span class="c-label">კომპანიის წილი</span></div><div class="balance" style="color:var(--text)" id="psCompanyTotal">$0</div></div>
+                        <div class="card stat-card"><div class="c-head"><span class="c-label">დილერების წილი</span></div><div class="balance green" id="psDealerTotal">$0</div></div>
+                    </div>
+
+                    <form id="addProfitShareForm" class="add-car-form hidden" style="margin-top:22px">
+                        <div class="flex-row">
+                            <div class="form-group"><label>დილერი (username)</label><input type="text" id="psDealer" required></div>
+                            <div class="form-group"><label>მარკა, მოდელი</label><input type="text" id="psCarInfo"></div>
+                            <div class="form-group"><label>VIN კოდი</label><input type="text" id="psVin"></div>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>ჯამური მოგება ($)</label><input type="number" id="psProfit" placeholder="0" required></div>
+                            <div class="form-group"><label>კომპანიის % </label><input type="number" id="psCompanyPct" value="50" min="0" max="100"></div>
+                            <div class="form-group"><label>დილერის %</label><input type="number" id="psDealerPct" value="50" min="0" max="100"></div>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group"><label>გაყიდვის თარიღი</label><input type="date" id="psDate"></div>
+                        </div>
+                        <div style="display:flex;gap:10px">
+                            <button type="submit" class="btn-primary">შენახვა</button>
+                            <button type="button" id="cancelProfitShareBtn" class="btn-primary" style="background:var(--panel-2);color:var(--text);border:1px solid var(--line)">გაუქმება</button>
+                        </div>
+                    </form>
+
+                    <div class="card" style="padding:0;overflow-x:auto;margin-top:18px">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>VIN</th>
+                                    <th>მანქანა</th>
+                                    <th class="admin-only">დილერი</th>
+                                    <th>მოგება</th>
+                                    <th>კომპანია</th>
+                                    <th>დილერი</th>
+                                    <th>სტატუსი</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="profitShareTableBody">
+                                <tr><td colspan="8" class="table-empty">იტვირთება…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
                 <!-- ===== SOON placeholder ===== -->
                 <section id="viewSoon" class="view-section hidden">
                     <div class="soon-box">
@@ -289,12 +399,12 @@
       ready(function(){
         var vOverview=document.getElementById('viewOverview');
         var tabOverview=document.getElementById('tabOverview');
-        var hideIds=['viewGarage','viewAddCar','viewUsers','viewStats','viewInvoices','viewSoon'];
+        var hideIds=['viewGarage','viewAddCar','viewUsers','viewStats','viewInvoices','viewFinancing','viewProfitShare','viewSoon'];
         function hideAll(){hideIds.forEach(function(id){var s=document.getElementById(id);if(s)s.classList.add('hidden');});}
         function clearActive(){document.querySelectorAll('.nav-link').forEach(function(l){l.classList.remove('active');});}
         function showOverview(){hideAll();if(vOverview)vOverview.classList.remove('hidden');clearActive();if(tabOverview)tabOverview.classList.add('active');}
         if(tabOverview)tabOverview.addEventListener('click',function(e){e.preventDefault();showOverview();});
-        ['tabGarage','tabAddCar','tabUsers','tabStats','tabInvoices'].forEach(function(id){var t=document.getElementById(id);if(t)t.addEventListener('click',function(){if(vOverview)vOverview.classList.add('hidden');var sv=document.getElementById('viewSoon');if(sv)sv.classList.add('hidden');});});
+        ['tabGarage','tabAddCar','tabUsers','tabStats','tabInvoices','tabFinancing','tabProfitShare'].forEach(function(id){var t=document.getElementById(id);if(t)t.addEventListener('click',function(){if(vOverview)vOverview.classList.add('hidden');var sv=document.getElementById('viewSoon');if(sv)sv.classList.add('hidden');});});
         document.querySelectorAll('.nav-soon').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();hideAll();if(vOverview)vOverview.classList.add('hidden');var sv=document.getElementById('viewSoon');if(sv){sv.classList.remove('hidden');document.getElementById('soonName').textContent=l.getAttribute('data-name')||'';}clearActive();l.classList.add('active');});});
         var qa=document.getElementById('qaAddCar');if(qa)qa.addEventListener('click',function(e){e.preventDefault();var t=document.getElementById('tabAddCar');if(t)t.click();});
         var qg=document.getElementById('qaCars');if(qg)qg.addEventListener('click',function(e){e.preventDefault();var t=document.getElementById('tabGarage');if(t)t.click();});
