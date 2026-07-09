@@ -411,11 +411,11 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
         const bankX = right - bankBoxW;
         doc.fillColor(GOLD).font('GeoBold').fontSize(9)
             .text('საქართველოს ბანკი', bankX, 22, { width: bankBoxW, align: 'right' });
-        doc.fillColor('#FFFFFF').font('Geo').fontSize(8.5)
+        doc.fillColor('#FFFFFF').font('Helvetica').fontSize(8.5)
             .text('BAGAGE22   GE77BG0000000611187597', bankX, 34, { width: bankBoxW, align: 'right' });
         doc.fillColor(GOLD).font('GeoBold').fontSize(9)
             .text('თიბისი ბანკი', bankX, 54, { width: bankBoxW, align: 'right' });
-        doc.fillColor('#FFFFFF').font('Geo').fontSize(8.5)
+        doc.fillColor('#FFFFFF').font('Helvetica').fontSize(8.5)
             .text('TBCBGE22   GE20TB7351545067800004', bankX, 66, { width: bankBoxW, align: 'right' });
         doc.font('Helvetica');
 
@@ -434,7 +434,9 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
             .text(`Dealer: ${invoice.dealerId}`, right - 200, 176, { width: 200, align: 'right' });
         if (invoice.recipientId) {
             doc.font('Geo').fillColor('#333333').fontSize(10)
-                .text(`პირადი ნომერი: ${invoice.recipientId}`, right - 200, 192, { width: 200, align: 'right' });
+                .text('პირადი ნომერი:', right - 200, 192, { width: 200, align: 'right' });
+            doc.font('Helvetica').fillColor('#333333').fontSize(10)
+                .text(invoice.recipientId, right - 200, 205, { width: 200, align: 'right' });
             doc.font('Helvetica');
         }
 
