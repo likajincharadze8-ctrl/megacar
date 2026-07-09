@@ -382,6 +382,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 vin: document.getElementById('invVin').value,
                 recipientFirstName: document.getElementById('invRecFirst').value,
                 recipientLastName: document.getElementById('invRecLast').value,
+                recipientId: document.getElementById('invRecId').value,
+                recipientPhone: document.getElementById('invRecPhone').value,
+                recipientAddress: document.getElementById('invRecAddress').value,
+                recipientEmail: document.getElementById('invRecEmail').value,
                 totalAmount: document.getElementById('invTotal').value,
                 amountPaid: document.getElementById('invPaid').value,
                 description: document.getElementById('invDescription').value
