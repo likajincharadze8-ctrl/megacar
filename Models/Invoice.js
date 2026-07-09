@@ -6,6 +6,7 @@ const invoiceSchema = new mongoose.Schema(
     dealerId: { type: String, required: true, trim: true },
     recipientFirstName: { type: String, trim: true },
     recipientLastName: { type: String, trim: true },
+    recipientId: { type: String, trim: true },
     makeModel: { type: String, trim: true },
     vin: { type: String, trim: true },
     description: { type: String, trim: true },

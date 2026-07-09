@@ -304,7 +304,7 @@ app.get('/api/invoices', requireAuth, async (req, res) => {
 app.post('/api/invoices', requireAuth, requireAdmin, async (req, res) => {
     try {
         const {
-            dealerId, recipientFirstName, recipientLastName,
+            dealerId, recipientFirstName, recipientLastName, recipientId,
             makeModel, vin, description, totalAmount, amountPaid
         } = req.body;
 
@@ -325,7 +325,7 @@ app.post('/api/invoices', requireAuth, requireAdmin, async (req, res) => {
         const newInvoice = new Invoice({
             invoiceNumber,
             dealerId: String(dealerId).trim(),
-            recipientFirstName, recipientLastName,
+            recipientFirstName, recipientLastName, recipientId,
             makeModel, vin, description,
             totalAmount: total, amountPaid: paid, status
         });
@@ -371,6 +371,13 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoiceNumber}.pdf"`);
         doc.pipe(res);
 
+        // Georgian font (for bank names / recipient ID label — base PDF fonts don't support Georgian)
+        doc.registerFont('Geo', path.join(__dirname, 'fonts', 'NotoSansGeorgian-Regular.ttf'));
+        doc.registerFont('GeoBold', path.join(__dirname, 'fonts', 'NotoSansGeorgian-Bold.ttf'));
+
+        const stampPath = path.join(__dirname, 'assets', 'stamp.png');
+        const signaturePath = path.join(__dirname, 'assets', 'signature.png');
+
         const pageWidth = doc.page.width;
         const left = 50;
         const right = pageWidth - 50;
@@ -380,6 +387,19 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
         doc.fillColor(GOLD).fontSize(26).text('MEGA CARS IMPORT', left, 35, { align: 'left' });
         doc.fillColor('#FFFFFF').fontSize(10).text('Car Import from USA to Georgia  •  Copart & IAAI', left, 68);
         doc.fillColor(GOLD).fontSize(9).text('megacar.ge  •  +995 557 936 618', left, 84);
+
+        // Bank requisites (top-right of header band)
+        const bankBoxW = 230;
+        const bankX = right - bankBoxW;
+        doc.fillColor(GOLD).font('GeoBold').fontSize(9)
+            .text('საქართველოს ბანკი', bankX, 22, { width: bankBoxW, align: 'right' });
+        doc.fillColor('#FFFFFF').font('Geo').fontSize(8.5)
+            .text('BAGAGE22   GE77BG0000000611187597', bankX, 34, { width: bankBoxW, align: 'right' });
+        doc.fillColor(GOLD).font('GeoBold').fontSize(9)
+            .text('თიბისი ბანკი', bankX, 54, { width: bankBoxW, align: 'right' });
+        doc.fillColor('#FFFFFF').font('Geo').fontSize(8.5)
+            .text('TBCBGE22   GE20TB7351545067800004', bankX, 66, { width: bankBoxW, align: 'right' });
+        doc.font('Helvetica');
 
         // Invoice title block
         doc.fillColor(OBSIDIAN).fontSize(22).text('INVOICE', left, 140);
@@ -393,6 +413,11 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
         doc.fillColor('#333333').fontSize(11)
             .text(`${invoice.recipientFirstName || ''} ${invoice.recipientLastName || ''}`.trim() || '—', right - 200, 160, { width: 200, align: 'right' })
             .text(`Dealer: ${invoice.dealerId}`, right - 200, 176, { width: 200, align: 'right' });
+        if (invoice.recipientId) {
+            doc.font('Geo').fillColor('#333333').fontSize(10)
+                .text(`პირადი ნომერი: ${invoice.recipientId}`, right - 200, 192, { width: 200, align: 'right' });
+            doc.font('Helvetica');
+        }
 
         // Divider
         doc.moveTo(left, 230).lineTo(right, 230).strokeColor(GOLD).lineWidth(2).stroke();
@@ -441,6 +466,16 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
         doc.fillColor('#FFFFFF').fontSize(13)
             .text(balance > 0 ? 'BALANCE DUE' : 'PAID IN FULL', left + 12, ry + 10)
             .text(`$${balance.toLocaleString()}`, right - 160, ry + 10, { width: 148, align: 'right' });
+        ry += 34;
+
+        // Stamp + signature (bottom-right, above footer)
+        const sigBlockY = ry + 30;
+        try { doc.opacity(0.9); doc.image(stampPath, right - 100, sigBlockY, { width: 90, height: 90 }); doc.opacity(1); } catch (e) {}
+        try { doc.image(signaturePath, left, sigBlockY + 30, { width: 100 }); } catch (e) {}
+        doc.moveTo(left, sigBlockY + 62).lineTo(left + 130, sigBlockY + 62).strokeColor('#DDDDDD').stroke();
+        doc.font('GeoBold').fillColor(OBSIDIAN).fontSize(9).text('ლიკა ჯინჭარაძე', left, sigBlockY + 66, { width: 130 });
+        doc.font('Geo').fillColor('#777777').fontSize(8).text('დირექტორი', left, sigBlockY + 78, { width: 130 });
+        doc.font('Helvetica');
 
         // Footer
         doc.fillColor('#999999').fontSize(9)
