@@ -695,7 +695,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
 
-        const editTools = canEditCar ? `
+        const editTools = role === 'admin' ? `
             <div class="modal-details-box" style="margin-top: 15px;">
                 <button class="btn-primary" style="background: #333; color: #fff;" onclick="window.showEditForm('${car._id}')">Edit Car Details</button>
             </div>
@@ -737,6 +737,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="modal-details-box" style="margin-top: 15px;">
                 <p style="display: flex; align-items: center; justify-content:space-between;">
                     <strong style="color:#fff;">Pipeline Status:</strong>
+                    ${role === 'admin' ? `
                     <select onchange="window.updateCarStatus('${car._id}', this.value)" style="padding:10px; background:#000; color:#fff; border:1px solid #333; border-radius:4px;">
                         <option value="Purchased" ${car.status === 'Purchased' ? 'selected' : ''}>Purchased</option>
                         <option value="In Transit" ${car.status === 'In Transit' ? 'selected' : ''}>In Transit</option>
@@ -744,6 +745,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="Arrived" ${car.status === 'Arrived' ? 'selected' : ''}>Arrived</option>
                         <option value="Sold" ${car.status === 'Sold' ? 'selected' : ''}>Sold</option>
                     </select>
+                    ` : `<span class="car-status-badge">${car.status || 'Purchased'}</span>`}
                 </p>
             </div>
             
