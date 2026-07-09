@@ -372,8 +372,14 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
         doc.pipe(res);
 
         // Georgian font (for bank names / recipient ID label — base PDF fonts don't support Georgian)
-        doc.registerFont('Geo', path.join(__dirname, 'fonts', 'NotoSansGeorgian-Regular.ttf'));
-        doc.registerFont('GeoBold', path.join(__dirname, 'fonts', 'NotoSansGeorgian-Bold.ttf'));
+        try {
+            doc.registerFont('Geo', path.join(__dirname, 'fonts', 'NotoSansGeorgian-Regular.ttf'));
+            doc.registerFont('GeoBold', path.join(__dirname, 'fonts', 'NotoSansGeorgian-Bold.ttf'));
+        } catch (fontErr) {
+            console.error('Georgian font failed to load, falling back to Helvetica:', fontErr.message);
+            doc.registerFont('Geo', 'Helvetica');
+            doc.registerFont('GeoBold', 'Helvetica-Bold');
+        }
 
         const stampPath = path.join(__dirname, 'assets', 'stamp.png');
         const signaturePath = path.join(__dirname, 'assets', 'signature.png');
