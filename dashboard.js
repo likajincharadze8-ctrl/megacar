@@ -665,6 +665,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const normalizedDealerId = String(car.dealerId || '').trim().toLowerCase();
         const normalizedCurrentUser = String(currentUsername || '').trim().toLowerCase();
         const canEditCar = role === 'admin' || role === 'dealer' || normalizedDealerId === normalizedCurrentUser;
+        const canUploadDocs = role === 'admin'; // backend also enforces admin-only for document uploads
         let adminTools = '';
         if (canEditCar) {
             let docsHtml = '<ul style="list-style:none; padding:0; margin-bottom:10px;">';
@@ -678,15 +679,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             docsHtml += '</ul>';
 
+            const uploadControls = canUploadDocs ? `
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <input type="file" id="newDocFile-${car._id}" multiple style="background:#000; color:#fff; border:1px solid #333; padding:10px; flex:1;">
+                    <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="window.uploadDoc('${car._id}')">Upload</button>
+                </div>
+            ` : '';
+
             adminTools = `
                 <div class="modal-details-box" style="margin-top: 15px;">
                     <h3 style="color:#fff; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">Documents</h3>
                     ${docsHtml}
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <input type="file" id="newDocFile-${car._id}" multiple style="background:#000; color:#fff; border:1px solid #333; padding:10px; flex:1;">
-                        <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="window.uploadDoc('${car._id}')">Upload</button>
-                    </div>
-
+                    ${uploadControls}
                 </div>
             `;
         }
