@@ -304,7 +304,7 @@ app.get('/api/invoices', requireAuth, async (req, res) => {
 app.post('/api/invoices', requireAuth, requireAdmin, async (req, res) => {
     try {
         const {
-            dealerId, recipientFirstName, recipientLastName, recipientId, recipientPhone, recipientAddress, recipientEmail,
+            dealerId, recipientFirstName, recipientLastName,
             makeModel, vin, description, totalAmount, amountPaid
         } = req.body;
 
@@ -325,7 +325,7 @@ app.post('/api/invoices', requireAuth, requireAdmin, async (req, res) => {
         const newInvoice = new Invoice({
             invoiceNumber,
             dealerId: String(dealerId).trim(),
-            recipientFirstName, recipientLastName, recipientId, recipientPhone, recipientAddress, recipientEmail,
+            recipientFirstName, recipientLastName,
             makeModel, vin, description,
             totalAmount: total, amountPaid: paid, status
         });
@@ -364,162 +364,88 @@ app.get('/api/invoices/:id/pdf', requireAuth, async (req, res) => {
         const OBSIDIAN = '#0E0E12';
         const GOLD = '#C9A24A';
         const STAMP_RED = '#BE3B30';
-        const MUTED = '#6B6558';
-        const LINE = '#E0D8C4';
 
         const doc = new PDFDocument({ size: 'A4', margin: 50 });
-        doc.page.margins.bottom = 0;
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoiceNumber}.pdf"`);
         doc.pipe(res);
 
-        // Fonts (Noto Sans Georgian — supports Georgian + Latin + digits)
-        doc.registerFont('Geo', path.join(__dirname, 'fonts', 'NotoSansGeorgian-Regular.ttf'));
-        doc.registerFont('GeoBold', path.join(__dirname, 'fonts', 'NotoSansGeorgian-Bold.ttf'));
-
-        const logoPath = path.join(__dirname, 'Megacarslogo.png');
-        const stampPath = path.join(__dirname, 'assets', 'stamp.png');
-        const signaturePath = path.join(__dirname, 'assets', 'signature.png');
-
         const pageWidth = doc.page.width;
         const left = 50;
         const right = pageWidth - 50;
-        const contentWidth = right - left;
 
-        // --- HEADER: logo left, bank requisites right ---
-        let y = 42;
-        try { doc.image(logoPath, left, y, { width: 62, height: 62 }); } catch (e) {}
+        // Header band
+        doc.rect(0, 0, pageWidth, 110).fill(OBSIDIAN);
+        doc.fillColor(GOLD).fontSize(26).text('MEGA CARS IMPORT', left, 35, { align: 'left' });
+        doc.fillColor('#FFFFFF').fontSize(10).text('Car Import from USA to Georgia  •  Copart & IAAI', left, 68);
+        doc.fillColor(GOLD).fontSize(9).text('megacar.ge  •  +995 557 936 618', left, 84);
 
-        const bankBoxW = 280;
-        const bankX = right - bankBoxW;
-        doc.fillColor(OBSIDIAN).font('GeoBold').fontSize(10)
-            .text('საქართველოს ბანკი', bankX, y, { width: bankBoxW, align: 'right' });
-        doc.fillColor(MUTED).font('Geo').fontSize(9)
-            .text('BAGAGE22', bankX, y + 14, { width: bankBoxW, align: 'right' })
-            .text('GE77BG0000000611187597', bankX, y + 27, { width: bankBoxW, align: 'right' });
-        doc.fillColor(OBSIDIAN).font('GeoBold').fontSize(10)
-            .text('თიბისი ბანკი', bankX, y + 44, { width: bankBoxW, align: 'right' });
-        doc.fillColor(MUTED).font('Geo').fontSize(9)
-            .text('TBCBGE22', bankX, y + 58, { width: bankBoxW, align: 'right' })
-            .text('GE20TB7351545067800004', bankX, y + 71, { width: bankBoxW, align: 'right' });
+        // Invoice title block
+        doc.fillColor(OBSIDIAN).fontSize(22).text('INVOICE', left, 140);
+        doc.fillColor('#555555').fontSize(10)
+            .text(`Invoice #: ${invoice.invoiceNumber}`, left, 170)
+            .text(`Date: ${new Date(invoice.createdAt).toLocaleDateString('en-GB')}`, left, 185)
+            .text(`Status: ${invoice.status}`, left, 200);
 
-        y = 132;
-        doc.moveTo(left, y).lineTo(right, y).strokeColor(LINE).lineWidth(1).stroke();
+        // Bill To box
+        doc.fillColor(OBSIDIAN).fontSize(12).text('BILL TO', right - 200, 140, { width: 200, align: 'right' });
+        doc.fillColor('#333333').fontSize(11)
+            .text(`${invoice.recipientFirstName || ''} ${invoice.recipientLastName || ''}`.trim() || '—', right - 200, 160, { width: 200, align: 'right' })
+            .text(`Dealer: ${invoice.dealerId}`, right - 200, 176, { width: 200, align: 'right' });
 
-        // --- TITLE + INVOICE META ---
-        y += 14;
-        doc.fillColor(OBSIDIAN).font('GeoBold').fontSize(22).text('INVOICE', left, y);
-        doc.fillColor(STAMP_RED).font('GeoBold').fontSize(10.5)
-            .text(String(invoice.status || '').toUpperCase(), left, y + 4, { width: contentWidth, align: 'right' });
-        doc.fillColor(MUTED).font('Geo').fontSize(9.5)
-            .text(`Invoice No: ${invoice.invoiceNumber}`, left, y + 30)
-            .text(`Date: ${new Date(invoice.createdAt).toLocaleDateString('en-GB')}`, left, y + 43);
+        // Divider
+        doc.moveTo(left, 230).lineTo(right, 230).strokeColor(GOLD).lineWidth(2).stroke();
 
-        y += 66;
-        doc.save();
-        doc.dash(4, { space: 3 }).moveTo(left, y).lineTo(right, y).strokeColor(GOLD).lineWidth(1).stroke();
-        doc.undash();
-        doc.restore();
-
-        // --- ITEM TABLE ---
-        y += 16;
-        const descColW = contentWidth * 0.58;
-        const qtyColW = contentWidth * 0.17;
-        const priceColW = contentWidth - descColW - qtyColW;
-
-        doc.rect(left, y, contentWidth, 28).fill(STAMP_RED);
-        doc.fillColor('#FFFFFF').font('GeoBold').fontSize(10)
-            .text('დანიშნულება', left + 12, y + 9, { width: descColW - 12 })
-            .text('ავტომობილის შეძენა', left + descColW, y + 9, { width: qtyColW + priceColW - 12, align: 'right' });
-        y += 28;
-
-        const itemLabel = [invoice.makeModel, invoice.vin ? `#${invoice.vin}` : ''].filter(Boolean).join('\n') || invoice.description || 'ავტომობილის შეძენა';
-        const itemRowH = 42;
-        doc.rect(left, y, contentWidth, itemRowH).strokeColor(LINE).lineWidth(1).stroke();
-        doc.fillColor(OBSIDIAN).font('GeoBold').fontSize(10.5)
-            .text(itemLabel, left + 12, y + 8, { width: descColW - 20 });
-        doc.font('Geo').fillColor(OBSIDIAN).fontSize(10.5)
-            .text('1', left + descColW, y + 15, { width: qtyColW, align: 'center' });
-        doc.font('GeoBold').fillColor(OBSIDIAN).fontSize(11)
-            .text(`$${(invoice.totalAmount || 0).toLocaleString()}`, left + descColW + qtyColW, y + 15, { width: priceColW - 12, align: 'right' });
-        y += itemRowH;
-
-        // --- ACCOUNT / RECIPIENT INFO BAR ---
-        y += 14;
-        doc.rect(left, y, contentWidth, 24).fill(STAMP_RED);
-        doc.fillColor('#FFFFFF').font('GeoBold').fontSize(9.5)
-            .text('ანგარიშ-ფაქტურის ინფორმაცია', left + 12, y + 7);
-        y += 24;
-
-        doc.rect(left, y, contentWidth, 30).strokeColor(LINE).lineWidth(1).stroke();
-        const recipientName = `${invoice.recipientFirstName || ''} ${invoice.recipientLastName || ''}`.trim() || '—';
-        doc.fillColor(OBSIDIAN).font('GeoBold').fontSize(11).text(recipientName, left + 12, y + 9);
-        if (invoice.recipientId) {
-            const idBoxW = 130;
-            doc.rect(right - idBoxW, y, idBoxW, 30).fill(STAMP_RED);
-            doc.fillColor('#FFFFFF').font('GeoBold').fontSize(10.5)
-                .text(invoice.recipientId, right - idBoxW, y + 9, { width: idBoxW, align: 'center' });
-        }
+        // Vehicle info
+        let y = 250;
+        doc.fillColor(OBSIDIAN).fontSize(13).text('Vehicle Details', left, y);
+        y += 22;
+        doc.fillColor('#333333').fontSize(11)
+            .text(`Make / Model:  ${invoice.makeModel || '—'}`, left, y);
+        y += 18;
+        doc.text(`VIN:  ${invoice.vin || '—'}`, left, y);
         y += 30;
 
-        // --- PAYMENT NOTE ---
-        y += 12;
-        doc.fillColor(MUTED).font('Geo').fontSize(8.5)
-            .text('თანხა ჩარიცხეთ ინვოისზე მითითებული ანგარიშის ნომერზე, ეროვნული ბანკის კურსით, ლარში.', left, y, { width: contentWidth });
-        y += 24;
+        // Description
+        if (invoice.description) {
+            doc.fillColor(OBSIDIAN).fontSize(13).text('Description', left, y);
+            y += 22;
+            doc.fillColor('#333333').fontSize(11).text(invoice.description, left, y, { width: right - left });
+            y += 50;
+        }
 
-        // --- INVOICE TO (left) + BALANCE / STAMP / SIGNATURE (right) ---
-        const colGap = 20;
-        const leftColW = contentWidth * 0.52 - colGap / 2;
-        const rightColW = contentWidth * 0.48 - colGap / 2;
-        const rightColX = left + leftColW + colGap;
-        const blockTop = y;
-
-        doc.fillColor(OBSIDIAN).font('GeoBold').fontSize(10).text('INVOICE TO:', left, blockTop);
-        let ly = blockTop + 16;
-        doc.font('Geo').fontSize(9.5).fillColor('#333333');
-        const addrLines = [recipientName];
-        if (invoice.recipientAddress) addrLines.push(invoice.recipientAddress);
-        if (invoice.recipientPhone) addrLines.push(`ტელ: ${invoice.recipientPhone}`);
-        if (invoice.recipientEmail) addrLines.push(`Email: ${invoice.recipientEmail}`);
-        addrLines.forEach(line => { doc.text(line, left, ly, { width: leftColW }); ly += 14; });
-
-        const boxH = 78;
-        const boxY = blockTop;
-        doc.rect(rightColX, boxY, rightColW, boxH).strokeColor(LINE).lineWidth(1).stroke();
-        doc.moveTo(rightColX + rightColW * 0.55, boxY).lineTo(rightColX + rightColW * 0.55, boxY + 24).strokeColor(LINE).stroke();
-        doc.moveTo(rightColX, boxY + 24).lineTo(rightColX + rightColW, boxY + 24).strokeColor(LINE).stroke();
-        doc.fillColor(MUTED).font('Geo').fontSize(7.5)
-            .text('Balance due:', rightColX + 8, boxY + 7)
-            .text(invoice.status === 'Paid' ? 'enclosed' : '', rightColX + rightColW * 0.55 + 8, boxY + 7);
-
+        // Amount table
         const balance = (invoice.totalAmount || 0) - (invoice.amountPaid || 0);
-        doc.fillColor(balance > 0 ? STAMP_RED : '#1E7E34').font('GeoBold').fontSize(15)
-            .text(`$${balance.toLocaleString()}`, rightColX + 8, boxY + 32);
+        const tableTop = Math.max(y, 420);
+        doc.rect(left, tableTop, right - left, 28).fill(OBSIDIAN);
+        doc.fillColor(GOLD).fontSize(11)
+            .text('DESCRIPTION', left + 12, tableTop + 9)
+            .text('AMOUNT (USD)', right - 160, tableTop + 9, { width: 148, align: 'right' });
 
-        // seal overlapping the top-right corner of the box
-        try { doc.opacity(0.9); doc.image(stampPath, rightColX + rightColW - 62, boxY - 22, { width: 84, height: 84 }); doc.opacity(1); } catch (e) {}
+        const rows = [
+            ['Total Amount', `$${(invoice.totalAmount || 0).toLocaleString()}`],
+            ['Amount Paid', `$${(invoice.amountPaid || 0).toLocaleString()}`],
+        ];
+        let ry = tableTop + 28;
+        rows.forEach(([label, val]) => {
+            doc.fillColor('#333333').fontSize(11)
+                .text(label, left + 12, ry + 9)
+                .text(val, right - 160, ry + 9, { width: 148, align: 'right' });
+            doc.moveTo(left, ry + 30).lineTo(right, ry + 30).strokeColor('#DDDDDD').lineWidth(1).stroke();
+            ry += 30;
+        });
 
-        // signature under the box, right-aligned
-        const sigW = 95;
-        try { doc.image(signaturePath, rightColX + rightColW - sigW, boxY + boxH + 6, { width: sigW }); } catch (e) {}
-        doc.moveTo(rightColX + rightColW - sigW, boxY + boxH + 38).lineTo(rightColX + rightColW, boxY + boxH + 38).strokeColor(LINE).stroke();
-        doc.fillColor(OBSIDIAN).font('GeoBold').fontSize(9)
-            .text('ლიკა ჯინჭარაძე', rightColX + rightColW - sigW, boxY + boxH + 42, { width: sigW, align: 'right' });
-        doc.fillColor(MUTED).font('Geo').fontSize(8)
-            .text('დირექტორი', rightColX + rightColW - sigW, boxY + boxH + 54, { width: sigW, align: 'right' });
+        // Balance row (highlighted)
+        doc.rect(left, ry, right - left, 34).fill(balance > 0 ? STAMP_RED : '#1E7E34');
+        doc.fillColor('#FFFFFF').fontSize(13)
+            .text(balance > 0 ? 'BALANCE DUE' : 'PAID IN FULL', left + 12, ry + 10)
+            .text(`$${balance.toLocaleString()}`, right - 160, ry + 10, { width: 148, align: 'right' });
 
-        y = boxY + boxH + 74;
-
-        // --- DISCLAIMER ---
-        doc.fillColor(MUTED).font('Geo').fontSize(8)
-            .text('გთხოვთ გაითვალისწინოთ, რომ ინვოისის დროულად გადაუხდელობამ შეიძლება გამოიწვიოს დამატებითი ქმედებები ანგარიშის პასუხისმგებელი მფლობელის მიმართ, მოქმედი წესებისა და პირობების შესაბამისად.', left, y, { width: contentWidth, align: 'left' });
-
-        // --- FOOTER BAR ---
-        doc.rect(0, doc.page.height - 26, pageWidth, 26).fill(OBSIDIAN);
-        doc.fillColor(GOLD).font('Geo').fontSize(8.5)
-            .text('Mega Cars Import LLC  •  Poti, Batumi, Kobuleti, Georgia  •  megacar.ge', 0, doc.page.height - 18, { width: pageWidth, align: 'center' });
+        // Footer
+        doc.fillColor('#999999').fontSize(9)
+            .text('Thank you for your business.  •  Mega Cars Import LLC  •  Poti, Batumi, Kobuleti, Georgia',
+                left, doc.page.height - 70, { width: right - left, align: 'center' });
 
         doc.end();
     } catch (error) {
