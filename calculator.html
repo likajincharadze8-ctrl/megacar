@@ -57,6 +57,28 @@
             <div class="calc-slide-container" style="max-width: 100%; background: rgba(17, 17, 17, 0.95);">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <div class="calc-form-group" style="flex: 1; min-width: 200px;">
+                        <label>აუქციონი</label>
+                        <select id="fullAuctionSource">
+                            <option value="copart">Copart</option>
+                            <option value="iaai">IAAI</option>
+                        </select>
+                    </div>
+                    <div class="calc-form-group" style="flex: 1; min-width: 200px;">
+                        <label>მანქანის ტიპი</label>
+                        <select id="vehicleType">
+                            <option value="sedan">სედანი</option>
+                            <option value="jeep">ჯიპი</option>
+                            <option value="mediumJeep">საშუალო ჯიპი</option>
+                            <option value="largeJeep">დიდი ჯიპი</option>
+                            <option value="motorcycle">მოტოციკლეტი</option>
+                            <option value="quad">კვადროციკლი</option>
+                            <option value="nonstandard">არასტანდარტული</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <div class="calc-form-group" style="flex: 1; min-width: 200px;">
                         <label>ლოტის ფასი ($)</label>
                         <input type="number" id="bidAmount" placeholder="მაგ. 2500">
                     </div>
@@ -65,14 +87,15 @@
                         <select id="destPort">
                             <option value="" disabled selected>-- Choose Port --</option>
                             <option value="GA">Georgia (GA)</option>
-                            <option value="CA">California (CA)</option>
                             <option value="NY">New York (NY)</option>
+                            <option value="CA">California (CA)</option>
                             <option value="TX">Texas (TX)</option>
                             <option value="WA">Washington (WA)</option>
+                            <option value="VA">Virginia (VA)</option>
                         </select>
                     </div>
                 </div>
-                
+
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <div class="calc-form-group" style="flex: 1; min-width: 200px;">
                         <label>აირჩიეთ შტატი (Origin State)</label>
@@ -86,7 +109,11 @@
 
                 <div style="background: #0a0a0a; padding: 20px; border-radius: 4px; border-left: 4px solid #ffcc00; margin-top: 20px;">
                     <p style="color: #ccc; display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px;">აუქციონის ფიქსირებული მოსაკრებელი: <strong id="dispCopart" style="color: #fff;">$0</strong></p>
-                    <p style="color: #ccc; display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px;">ტრანსპორტირების ღირებულება: <strong id="dispShipping" style="color: #fff;">$0</strong></p>
+                    <p style="color: #ccc; display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px;">გადაზიდვა (yard → port): <strong id="dispTowing" style="color: #fff;">$0</strong></p>
+                    <p style="color: #ccc; display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px;">კონტეინერის წილი: <strong id="dispContainer" style="color: #fff;">$0</strong></p>
+                    <p style="color: #ccc; display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px;">მომსახურების საკომისიო: <strong id="dispServiceFee" style="color: #fff;">$200</strong></p>
+                    <hr style="border-color: #333; margin: 10px 0;">
+                    <p style="color: #ccc; display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px;">ტრანსპორტირების ჯამი: <strong id="dispShipping" style="color: #fff;">$0</strong></p>
                     <hr style="border-color: #333; margin: 15px 0;">
                     <p style="color: #ffcc00; display: flex; justify-content: space-between; font-size: 22px; font-weight: bold;">სრული ჯამი (მანქანა + ტრანსპორტი): <span id="dispTotal">$0</span></p>
                 </div>
@@ -94,131 +121,94 @@
         </section>
     </div>
 
+    <script src="copart-rates.js"></script>
+    <script src="iaai-rates.js"></script>
+    <script src="container-rates.js"></script>
     <script>
-        // Shipping Dictionary mapped with exact +$200 margins to match the PDF
-        const shippingRates = {
-            "ABILENE - TX": { "TX": 1950 }, "ADELANTO - CA": { "CA": 2200 }, "AKRON - OH": { "NY": 1850 }, "ALBANY - NY": { "NY": 1600 },
-            "ALBUQUERQUE - NM": { "CA": 2690, "TX": 2170 }, "ALTOONA - PA": { "NY": 1790 }, "AMARILLO - TX": { "TX": 1890 },
-            "ANCHORAGE - AK": { "WA": 3770 }, "ANCHORAGE SOUTH - AK": { "WA": 3770 }, "ANDREWS - TX": { "TX": 1970 },
-            "ANTELOPE - CA": { "CA": 2310 }, "APPLETON - WI": { "NY": 2050 }, "ATLANTA EAST - GA": { "GA": 1650 },
-            "ATLANTA NORTH - GA": { "GA": 1650 }, "ATLANTA SOUTH - GA": { "GA": 1650 }, "ATLANTA WEST - GA": { "GA": 1650 },
-            "AUGUSTA - GA": { "GA": 1650 }, "AUSTIN - TX": { "TX": 1850 }, "BAKERSFIELD - CA": { "CA": 2200 },
-            "BALTIMORE - MD": { "NY": 1750 }, "BALTIMORE EAST - MD": { "NY": 1750 }, "BATON ROUGE - LA": { "GA": 1750 },
-            "BILLINGS - MT": { "TX": 2700, "WA": 2770 }, "BIRMINGHAM - AL": { "GA": 1750 }, "BISMARCK - ND": { "NY": 2650 },
-            "BOISE - ID": { "WA": 2392 }, "BUFFALO - NY": { "NY": 1850 }, "CANDIA - NH": { "NY": 1850 },
-            "CARTERSVILLE - GA": { "GA": 1600 }, "CASPER - WY": { "WA": 3217 }, "CHAMBERSBURG - PA": { "NY": 1700 },
-            "CHARLESTON - SC": { "GA": 1550 }, "CHARLESTON - WV": { "NY": 1817 }, "CHICAGO NORTH - IL": { "NY": 1950 },
-            "CHICAGO SOUTH - IL": { "NY": 1950 }, "CHINA GROVE - NC": { "GA": 1590 }, "CICERO - IN": { "GA": 1950 },
-            "CLEVELAND EAST - OH": { "NY": 1790 }, "CLEVELAND WEST - OH": { "NY": 1790 }, "COLORADO SPRINGS - CO": { "CA": 2630, "TX": 2705 },
-            "COLUMBIA - MO": { "GA": 1950 }, "COLUMBIA - SC": { "GA": 1520 }, "COLUMBUS - OH": { "NY": 1820 },
-            "CONCORD - NC": { "GA": 1590 }, "CORPUS CHRISTI - TX": { "TX": 1770 }, "CRASHEDTOYS ATLANTA - GA": { "GA": 1570 },
-            "CRASHEDTOYS DALLAS - TX": { "TX": 1770 }, "CRASHEDTOYS EAST BETHEL - MN": { "NY": 1970 }, "CRASHEDTOYS ELDRIDGE - IA": { "NY": 2250 },
-            "CRASHEDTOYS MINNEAPOLIS - MN": { "NY": 2350 }, "CRASHEDTOYS SACRAMENTO - CA": { "CA": 2300 }, "CULPEPER - VA": { "NY": 1890 },
-            "DALLAS - TX": { "TX": 1790 }, "DALLAS SOUTH - TX": { "TX": 1790 }, "DANVILLE - VA": { "NY": 1720 },
-            "DAVENPORT - IA": { "NY": 1990 }, "DAYTON - OH": { "NY": 1840 }, "DENVER - CO": { "CA": 2630, "TX": 2150 },
-            "DENVER CENTRAL - CO": { "CA": 2630, "TX": 2150 }, "DENVER SOUTH - CO": { "CA": 2630, "TX": 2150 }, "DES MOINES - IA": { "NY": 1940 },
-            "DETROIT - MI": { "NY": 1840 }, "DOTHAN - AL": { "GA": 1620 }, "DYER - IN": { "GA": 1867 },
-            "EARLINGTON - KY": { "GA": 1790 }, "EL PASO - TX": { "TX": 1920 }, "EUGENE - OR": { "WA": 2290 },
-            "EXETER - RI": { "NY": 1650 }, "FAIRBURN - GA": { "GA": 1650 }, "FAYETTEVILLE - AR": { "TX": 1950 },
-            "FLINT - MI": { "NY": 1870 }, "FORT WAYNE - IN": { "GA": 1920 }, "FREDERICKSBURG - VA": { "NY": 1650 },
-            "FREETOWN - MA": { "NY": 1700 }, "FREMONT - CA": { "CA": 2280 }, "FRESNO - CA": { "CA": 2230 },
-            "FT. PIERCE - FL": { "GA": 1600 }, "FT. WORTH - TX": { "TX": 1750 }, "GASTONIA - NC": { "GA": 1650 },
-            "GLASSBORO EAST - NJ": { "NY": 1570 }, "GLASSBORO WEST - NJ": { "NY": 1570 }, "GRAHAM - WA": { "WA": 2150 },
-            "GREER - SC": { "GA": 1600 }, "GRENADA - MS": { "GA": 1750 }, "HAMMOND - IN": { "GA": 1920 },
-            "HAMPTON - VA": { "NY": 1670 }, "HARRISBURG - PA": { "NY": 1650 }, "HARTFORD - CT": { "NY": 1650 },
-            "HARTFORD SPRINGFIELD - CT": { "NY": 1600 }, "HAYWARD - CA": { "CA": 2300 }, "HELENA - MT": { "WA": 2650 },
-            "HONOLULU - HI": { "CA": 3800 }, "HOUSTON - TX": { "TX": 1720 }, "HOUSTON EAST - TX": { "TX": 1720 },
-            "INDIANAPOLIS - IN": { "GA": 1870 }, "IONIA - MI": { "NY": 1970 }, "JACKSON - MS": { "GA": 1700 },
-            "JACKSONVILLE EAST - FL": { "GA": 1550 }, "JACKSONVILLE NORTH - FL": { "GA": 1550 }, "JACKSONVILLE WEST - FL": { "GA": 1550 },
-            "KANSAS CITY - KS": { "GA": 1890 }, "KANSAS CITY EAST - KS": { "GA": 1890 }, "KINCHELOE - MI": { "NY": 2290 },
-            "KNOXVILLE - TN": { "GA": 1650 }, "LANSING - MI": { "NY": 1970 }, "LAS VEGAS - NV": { "CA": 2280 },
-            "LAS VEGAS WEST - NV": { "CA": 2280 }, "LEXINGTON EAST - KY": { "GA": 1790 }, "LEXINGTON WEST - KY": { "GA": 1790 },
-            "LINCOLN - NE": { "TX": 1950 }, "LITTLE ROCK - AR": { "TX": 1790 }, "LONG BEACH - CA": { "CA": 2090 },
-            "LONG ISLAND - NY": { "NY": 1620 }, "LONGVIEW - TX": { "TX": 1790 }, "LOS ANGELES - CA": { "CA": 2150 },
-            "LOUISVILLE - KY": { "GA": 1850 }, "LUFKIN - TX": { "TX": 1770 }, "LUMBERTON - NC": { "GA": 1620 },
-            "LYMAN - ME": { "NY": 1770 }, "MACON - GA": { "GA": 1570 }, "MADISON - WI": { "NY": 1950 },
-            "MADISON SOUTH - WI": { "NY": 1950 }, "MARTINEZ - CA": { "CA": 2300 }, "MCALLEN - TX": { "TX": 1790 },
-            "MEBANE - NC": { "GA": 1620 }, "MEMPHIS - TN": { "GA": 1820 }, "MENTONE - CA": { "CA": 2230 },
-            "MIAMI CENTRAL - FL": { "GA": 1650 }, "MIAMI NORTH - FL": { "GA": 1650 }, "MIAMI SOUTH - FL": { "GA": 1650 },
-            "MILWAUKEE - WI": { "NY": 1970 }, "MILWAUKEE NORTH - WI": { "NY": 1970 }, "MILWAUKEE SOUTH - WI": { "NY": 1970 },
-            "MINNEAPOLIS - MN": { "GA": 2200, "NY": 1990 }, "MINNEAPOLIS NORTH - MN": { "GA": 2200, "NY": 1990 },
-            "MOBILE - AL": { "GA": 1650 }, "MOBILE SOUTH - AL": { "GA": 1650 }, "MOCKSVILLE - NC": { "GA": 1620 },
-            "MONTGOMERY - AL": { "GA": 1620 }, "NASHVILLE - TN": { "GA": 1750 }, "NEW ORLEANS - LA": { "GA": 1720 },
-            "NEWBURGH - NY": { "NY": 1620 }, "NORTH BOSTON - MA": { "NY": 1700 }, "NORTH CHARLESTON - SC": { "GA": 1550 },
-            "NORTH SEATTLE - WA": { "WA": 2150 }, "OCALA - FL": { "GA": 1650 }, "OGDEN - UT": { "CA": 2400 },
-            "OKLAHOMA CITY - OK": { "TX": 1950 }, "ORLANDO - FL": { "GA": 1620 }, "ORLANDO NORTH - FL": { "GA": 1620 },
-            "ORLANDO SOUTH - FL": { "GA": 1620 }, "PASCO - WA": { "WA": 2300 }, "PEORIA - IL": { "NY": 1970 },
-            "PHILADELPHIA - PA": { "NY": 1600 }, "PHILADELPHIA EAST - PA": { "NY": 1600 }, "PHILADELPHIA EAST SUBLOT - PA": { "NY": 1600 },
-            "PHOENIX - AZ": { "CA": 1700 }, "PHOENIX NORTH - AZ": { "CA": 1700 }, "PITTSBURGH SOUTH - PA": { "NY": 1790 },
-            "PITTSBURGH EAST - PA": { "NY": 1800 }, "PITTSBURGH NORTH - PA": { "NY": 1800 }, "PITTSBURGH WEST - PA": { "NY": 1800 },
-            "PORTLAND NORTH - OR": { "WA": 2190 }, "PORTLAND SOUTH - OR": { "WA": 2190 }, "PUNTA GORDA - FL": { "GA": 1650 },
-            "PUNTA GORDA SOUTH - FL": { "GA": 1650 }, "RALEIGH - NC": { "GA": 1620 }, "RALEIGH NORTH - NC": { "GA": 1620 },
-            "RANCHO CUCAMONGA - CA": { "CA": 2150 }, "RAPID CITY - SD": { "TX": 2500, "WA": 3100 }, "REDDING - CA": { "CA": 2400 },
-            "RENO - NV": { "CA": 2300 }, "RICHMOND - VA": { "NY": 1750 }, "RICHMOND EAST - VA": { "NY": 1750 },
-            "ROCHESTER - NY": { "NY": 1770 }, "RUTLAND - VT": { "NY": 1850 }, "SACRAMENTO - CA": { "CA": 2300 },
-            "SALT LAKE CITY - UT": { "CA": 2350 }, "SAN ANTONIO - TX": { "TX": 1790 }, "SAN BERNARDINO - CA": { "CA": 2150 },
-            "SAN DIEGO - CA": { "CA": 2190 }, "SAN JOSE - CA": { "CA": 2300 }, "SAVANNAH - GA": { "GA": 1400 },
-            "SCRANTON - PA": { "NY": 1650 }, "SEAFORD - DE": { "NY": 1670 }, "SHREVEPORT - LA": { "TX": 1820 },
-            "SIKESTON - MO": { "GA": 1950 }, "SO SACRAMENTO - CA": { "CA": 2300 }, "SOMERVILLE - NJ": { "NY": 1550 },
-            "SOUTH BOSTON - MA": { "NY": 1700 }, "SOUTHERN ILLINOIS - IL": { "NY": 1890 }, "SPARTANBURG - SC": { "GA": 1620 },
-            "SPOKANE - WA": { "WA": 2300 }, "SPRINGFIELD - MO": { "GA": 1920 }, "ST. CLOUD - MN": { "NY": 2050 },
-            "ST. LOUIS - MO": { "GA": 1920 }, "SUN VALLEY - CA": { "CA": 2150 }, "SYRACUSE - NY": { "NY": 1690 },
-            "TALLAHASSEE - FL": { "GA": 1620 }, "TAMPA SOUTH - FL": { "GA": 1620 }, "TANNER - AL": { "GA": 1720 },
-            "TIFTON - GA": { "GA": 1600 }, "TRENTON - NJ": { "NY": 1600 }, "TUCSON - AZ": { "CA": 2300 },
-            "TULSA - OK": { "TX": 1990 }, "VALLEJO - CA": { "CA": 2300 }, "VAN NUYS - CA": { "CA": 2190 },
-            "WACO - TX": { "TX": 1790 }, "WALTON - KY": { "GA": 1850 }, "WASHINGTON DC - MD": { "NY": 1670 },
-            "WAYLAND - MI": { "NY": 2020 }, "WEST PALM BEACH - FL": { "GA": 1670 }, "WEST WARREN - MA": { "NY": 1700 },
-            "WHEELING - IL": { "NY": 1920 }, "WICHITA - KS": { "TX": 1990 }, "WINDHAM - ME": { "NY": 1870 },
-            "YORK HAVEN - PA": { "NY": 1650 }
-        };
+        const PORTS = ['GA', 'NY', 'CA', 'TX', 'WA', 'VA'];
+        const SERVICE_FEE = 200;
 
-        const stateMap = {};
-        Object.keys(shippingRates).forEach(loc => {
-            const parts = loc.split(' - ');
-            const state = parts.length > 1 ? parts.pop().trim() : "OTHER";
-            const city = parts.join(' - ').trim() || loc;
-            if(!stateMap[state]) stateMap[state] = [];
-            stateMap[state].push({ fullKey: loc, cityName: city });
-        });
+        // Vehicle type -> which container row to use + how many vehicles share that container.
+        // sedan/jeep come directly from the dealer's instructions (sedan=4/container, jeep=3/container).
+        // mediumJeep/largeJeep/quad/nonstandard are reasonable extrapolations — flag to adjust if needed.
+        const VEHICLE_CONTAINER_MAP = {
+            sedan:       { row: CONTAINER_RATES['40ft4auto'], divisor: 4 },
+            jeep:        { row: CONTAINER_RATES['40ft3auto'], divisor: 3 },
+            mediumJeep:  { row: CONTAINER_RATES['40ft3auto'], divisor: 3 },
+            largeJeep:   { row: CONTAINER_RATES['45ft4auto'], divisor: 4 },
+            motorcycle:  { row: CONTAINER_RATES['motorcycle'], divisor: 1 },
+            quad:        { row: CONTAINER_RATES['motorcycle'], divisor: 1 },
+            nonstandard: { row: CONTAINER_RATES['oversizeMotorcycle'], divisor: 1 }
+        };
 
         const originState = document.getElementById('originState');
         const originCity = document.getElementById('originCity');
         const destSelect = document.getElementById('destPort');
         const bidInput = document.getElementById('bidAmount');
+        const auctionSourceSelect = document.getElementById('fullAuctionSource');
+        const vehicleTypeSelect = document.getElementById('vehicleType');
 
         const soloAuctionType = document.getElementById('soloAuctionType');
         const soloLotPrice = document.getElementById('soloLotPrice');
 
-        Object.keys(stateMap).sort().forEach(state => {
-            let option = document.createElement('option');
-            option.value = state; option.textContent = state;
-            originState.appendChild(option);
-        });
+        function getActiveRates() {
+            return auctionSourceSelect.value === 'iaai' ? IAAI_RATES : COPART_RATES;
+        }
 
-        originState.addEventListener('change', function() {
+        function buildStateMap(rates) {
+            const map = {};
+            Object.keys(rates).forEach(loc => {
+                const parts = loc.split(' - ');
+                const state = parts.length > 1 ? parts[parts.length - 1].trim() : 'OTHER';
+                const city = parts.length > 1 ? parts.slice(0, -1).join(' - ').trim() : loc;
+                if (!map[state]) map[state] = [];
+                map[state].push({ fullKey: loc, cityName: city });
+            });
+            return map;
+        }
+
+        let currentStateMap = {};
+
+        function populateStates() {
+            currentStateMap = buildStateMap(getActiveRates());
+            originState.innerHTML = '<option value="" disabled selected>-- Choose State --</option>';
+            Object.keys(currentStateMap).sort().forEach(state => {
+                const option = document.createElement('option');
+                option.value = state; option.textContent = state;
+                originState.appendChild(option);
+            });
             originCity.innerHTML = '<option value="" disabled selected>-- Choose City --</option>';
-            if(stateMap[this.value]) {
-                stateMap[this.value].sort((a,b)=>a.cityName.localeCompare(b.cityName)).forEach(item => {
-                    let option = document.createElement('option');
+            originCity.disabled = true;
+        }
+
+        originState.addEventListener('change', function () {
+            originCity.innerHTML = '<option value="" disabled selected>-- Choose City --</option>';
+            if (currentStateMap[this.value]) {
+                currentStateMap[this.value].sort((a, b) => a.cityName.localeCompare(b.cityName)).forEach(item => {
+                    const option = document.createElement('option');
                     option.value = item.fullKey; option.textContent = item.cityName;
                     originCity.appendChild(option);
                 });
                 originCity.disabled = false;
-            } else { originCity.disabled = true; }
+            } else {
+                originCity.disabled = true;
+            }
             runCalculations();
         });
+
+        auctionSourceSelect.addEventListener('change', () => { populateStates(); runCalculations(); });
 
         // Math engine
         function calculateAuctionFee(bid, type) {
             if (bid <= 0) return 0;
             if (type === 'manheim') return Math.round((bid * 0.05) + 150); // Approx Manheim Scale
-            
+
             let buyerFee = 0;
             if (bid < 500) buyerFee = 125; else if (bid < 1000) buyerFee = 225;
             else if (bid < 2000) buyerFee = 350; else if (bid < 3000) buyerFee = 450;
             else if (bid < 4000) buyerFee = 550; else if (bid < 5000) buyerFee = 650;
             else if (bid < 7500) buyerFee = 750; else if (bid < 10000) buyerFee = 850;
-            else buyerFee = bid * 0.075; 
+            else buyerFee = bid * 0.075;
             return Math.round(buyerFee + 79 + 129 + 10);
         }
 
@@ -228,18 +218,53 @@
             const copartFees = calculateAuctionFee(bid, 'copart'); // Default to copart for shipping total
             document.getElementById('dispCopart').innerText = `$${copartFees.toLocaleString()}`;
 
-            let shippingCost = 0;
-            const selectedLoc = originCity.value; const port = destSelect.value;
-            if (selectedLoc && port && shippingRates[selectedLoc] && shippingRates[selectedLoc][port]) {
-                shippingCost = shippingRates[selectedLoc][port];
-                document.getElementById('dispShipping').innerText = `$${shippingCost.toLocaleString()}`;
-            } else {
-                document.getElementById('dispShipping').innerText = selectedLoc && port ? "არ არის ხელმისაწვდომი" : "$0";
+            const rates = getActiveRates();
+            const selectedLoc = originCity.value;
+            const port = destSelect.value;
+            const portIdx = PORTS.indexOf(port);
+
+            let towingCost = null;
+            if (selectedLoc && portIdx > -1 && rates[selectedLoc]) {
+                towingCost = rates[selectedLoc][portIdx];
             }
 
-            if (bid > 0 && shippingCost > 0) {
-                document.getElementById('dispTotal').innerText = `$${(bid + copartFees + shippingCost).toLocaleString()}`;
-            } else { document.getElementById('dispTotal').innerText = "$0"; }
+            const mapping = VEHICLE_CONTAINER_MAP[vehicleTypeSelect.value];
+            let containerShare = null;
+            if (mapping && portIdx > -1 && mapping.row) {
+                const containerTotal = mapping.row[portIdx];
+                if (containerTotal !== null && containerTotal !== undefined) {
+                    containerShare = Math.round((containerTotal / mapping.divisor) * 100) / 100;
+                }
+            }
+
+            const dispTowing = document.getElementById('dispTowing');
+            const dispContainer = document.getElementById('dispContainer');
+            const dispShipping = document.getElementById('dispShipping');
+            document.getElementById('dispServiceFee').innerText = `$${SERVICE_FEE}`;
+
+            dispTowing.innerText = (towingCost === null || towingCost === undefined)
+                ? (selectedLoc && port ? 'არ არის ხელმისაწვდომი' : '$0')
+                : `$${towingCost.toLocaleString()}`;
+
+            dispContainer.innerText = (containerShare === null || containerShare === undefined)
+                ? (port ? 'არ არის ხელმისაწვდომი' : '$0')
+                : `$${containerShare.toLocaleString()}`;
+
+            let shippingTotal = 0;
+            let shippingValid = false;
+            if (towingCost !== null && towingCost !== undefined && containerShare !== null && containerShare !== undefined) {
+                shippingTotal = towingCost + containerShare + SERVICE_FEE;
+                shippingValid = true;
+                dispShipping.innerText = `$${shippingTotal.toLocaleString()}`;
+            } else {
+                dispShipping.innerText = '$0';
+            }
+
+            if (bid > 0 && shippingValid) {
+                document.getElementById('dispTotal').innerText = `$${(bid + copartFees + shippingTotal).toLocaleString()}`;
+            } else {
+                document.getElementById('dispTotal').innerText = '$0';
+            }
 
             // Solo Auction Calculator Updates
             const sBid = parseFloat(soloLotPrice.value) || 0;
@@ -249,8 +274,12 @@
             document.getElementById('soloTotalCost').innerText = `$${(sBid > 0 ? sBid + sFee : 0).toLocaleString()}`;
         }
 
-        [bidInput, originCity, destSelect, soloLotPrice, soloAuctionType].forEach(el => el.addEventListener('input', runCalculations));
+        populateStates();
+        [bidInput, originCity, destSelect, soloLotPrice, soloAuctionType, vehicleTypeSelect].forEach(el => el.addEventListener('input', runCalculations));
+        destSelect.addEventListener('change', runCalculations);
+        vehicleTypeSelect.addEventListener('change', runCalculations);
         if (soloAuctionType) soloAuctionType.addEventListener('change', runCalculations);
+        runCalculations();
     </script>
 </body>
 </html>
