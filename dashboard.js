@@ -237,7 +237,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(car.isFeatured) card.style.border = '1px solid #ffcc00';
                 
                 const firstImg = car.images?.[0] || '';
-                const previewImg = firstImg.startsWith('/uploads/') ? firstImg : (firstImg ? `/uploads/${firstImg}` : '');
+                const previewImg = typeof firstImg === 'string'
+                    ? (firstImg.startsWith('/uploads/') || firstImg.startsWith('http') ? firstImg : (firstImg ? `/uploads/${firstImg}` : ''))
+                    : (firstImg.url || '');
 
                 const totalCost = (car.auctionPrice || 0) + (car.transportPrice || 0);
                 const leftToPay = totalCost - (car.amountPaid || 0);
@@ -655,9 +657,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let galleryHtml = '';
         if (car.images && car.images.length > 0) {
             car.images.forEach(img => {
-                const imgPath = img.startsWith('/uploads/') ? img : `/uploads/${img}`;
-                const removeBtn = role === 'admin'
-                    ? `<button onclick="window.removeCarPhoto('${car._id}','${img}')" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;">&times;</button>`
+                const isLegacy = typeof img === 'string';
+                const imgPath = isLegacy ? (img.startsWith('/uploads/') || img.startsWith('http') ? img : `/uploads/${img}`) : (img.url || '');
+                const imgId = isLegacy ? img : (img.publicId || '');
+                const removeBtn = (role === 'admin' && imgId)
+                    ? `<button onclick="window.removeCarPhoto('${car._id}','${imgId}')" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;">&times;</button>`
                     : '';
                 galleryHtml += `<div style="position:relative;display:inline-block;margin:5px;">
                     <img src="${imgPath}" style="width:100px; height:100px; object-fit:cover; border-radius:4px;">
@@ -678,11 +682,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const IMAGE_EXT = /\.(jpe?g|png|gif|webp|bmp)$/i;
             if (car.documents && car.documents.length > 0) {
                 car.documents.forEach(doc => {
-                    const docPath = doc.filename.startsWith('/uploads/') ? doc.filename : `/uploads/${doc.filename}`;
-                    const removeBtn = canUploadDocs
-                        ? `<button onclick="window.deleteCarDoc('${car._id}','${doc.filename}')" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;">&times;</button>`
+                    const isLegacy = !doc.url;
+                    const docPath = isLegacy
+                        ? (doc.filename ? (doc.filename.startsWith('/uploads/') ? doc.filename : `/uploads/${doc.filename}`) : '')
+                        : doc.url;
+                    const docId = isLegacy ? (doc.filename || '') : (doc.publicId || '');
+                    const removeBtn = (canUploadDocs && docId)
+                        ? `<button onclick="window.deleteCarDoc('${car._id}','${docId}')" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;">&times;</button>`
                         : '';
-                    if (IMAGE_EXT.test(doc.filename)) {
+                    if (IMAGE_EXT.test(doc.originalName || docPath)) {
                         docsHtml += `<div style="position:relative;">
                             <a href="${docPath}" target="_blank">
                                 <img src="${docPath}" style="width:90px;height:90px;object-fit:cover;border-radius:4px;border:1px solid #333;">
@@ -804,13 +812,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    window.removeCarPhoto = async (carId, filename) => {
+    window.removeCarPhoto = async (carId, publicId) => {
         if (!confirm('ფოტოს წაშლა?')) return;
         try {
             const res = await fetch(`/api/cars/${carId}/photos/remove`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename })
+                body: JSON.stringify({ publicId })
             });
             if (!res.ok) { alert('ფოტოს წაშლა ვერ მოხერხდა.'); return; }
             await loadCars();
@@ -822,13 +830,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    window.deleteCarDoc = async (carId, filename) => {
+    window.deleteCarDoc = async (carId, publicId) => {
         if (!confirm('დოკუმენტის წაშლა?')) return;
         try {
             const res = await fetch(`/api/cars/${carId}/documents/remove`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename })
+                body: JSON.stringify({ publicId })
             });
             if (!res.ok) { alert('დოკუმენტის წაშლა ვერ მოხერხდა.'); return; }
             await loadCars();

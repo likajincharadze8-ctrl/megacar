@@ -334,8 +334,11 @@
                         document.getElementById('cotd-status-val').textContent = car.status || 'Purchased';
                         document.getElementById('cotd-price').textContent = '$' + (car.auctionPrice || 0).toLocaleString();
                         if (car.images && car.images.length > 0) {
-                            const imgPath = car.images[0].startsWith('/uploads/') ? car.images[0] : '/uploads/' + car.images[0];
-                            document.getElementById('cotd-img').src = imgPath;
+                            const firstImg = car.images[0];
+                            const imgPath = typeof firstImg === 'string'
+                                ? (firstImg.startsWith('/uploads/') || firstImg.startsWith('http') ? firstImg : '/uploads/' + firstImg)
+                                : (firstImg.url || '');
+                            if (imgPath) document.getElementById('cotd-img').src = imgPath;
                         }
                     }
                 }

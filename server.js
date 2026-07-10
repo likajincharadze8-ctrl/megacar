@@ -3,6 +3,8 @@ const fs = require('fs');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const multer = require('multer');
+const { v2: cloudinary } = require('cloudinary');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -74,15 +76,24 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// --- 4. STORAGE CONFIGURATION ---
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => { cb(null, uploadsDir); },
-    filename: (req, file, cb) => { cb(null, Date.now() + '-' + file.originalname); }
+// --- 4. STORAGE CONFIGURATION (Cloudinary — persists across Render deploys) ---
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
-const upload = multer({
-    storage: storage,
-    limits: { files: 30, fileSize: 50 * 1024 * 1024 }
+
+const photoStorage = new CloudinaryStorage({
+    cloudinary,
+    params: { folder: 'megacars/cars', resource_type: 'image' }
 });
+const docStorage = new CloudinaryStorage({
+    cloudinary,
+    params: { folder: 'megacars/documents', resource_type: 'auto' }
+});
+
+const uploadPhotos = multer({ storage: photoStorage, limits: { files: 30, fileSize: 50 * 1024 * 1024 } });
+const uploadDocs = multer({ storage: docStorage, limits: { files: 5, fileSize: 50 * 1024 * 1024 } });
 
 // --- 5. DATABASE CONNECTION ---
 mongoose.connect(process.env.MONGO_URI)
@@ -169,7 +180,7 @@ app.get('/api/cars', requireAuth, async (req, res) => {
     }
 });
 
-app.post('/api/cars', requireAuth, requireAdmin, upload.array('photos', 30), async (req, res) => {
+app.post('/api/cars', requireAuth, requireAdmin, uploadPhotos.array('photos', 30), async (req, res) => {
     try {
         const { 
             makeModel, auctionPrice, transportPrice, amountPaid, vin, dealerId, 
@@ -179,7 +190,7 @@ app.post('/api/cars', requireAuth, requireAdmin, upload.array('photos', 30), asy
         
         const finalDealerId = (dealerId || req.user.username || '').trim();
         
-        const imagePaths = (req.files || []).map(file => file.filename);
+        const imagePaths = (req.files || []).map(file => ({ url: file.path, publicId: file.filename }));
         if (!makeModel || !vin || !finalDealerId) {
             return res.status(400).json({ error: 'Make/Model, VIN, and Dealer are required.' });
         }
@@ -233,21 +244,18 @@ app.delete('/api/cars/:id', requireAuth, requireAdmin, async (req, res) => {
         const car = await Car.findById(req.params.id);
         if (!car) return res.status(404).json({ error: "Car not found" });
 
+        const destroyJobs = [];
         if (car.images && car.images.length > 0) {
             car.images.forEach(img => {
-                const cleanName = path.basename(img); 
-                const fullPath = path.join(__dirname, 'uploads', cleanName);
-                if (fs.existsSync(fullPath)) { fs.unlinkSync(fullPath); }
+                if (img.publicId) destroyJobs.push(cloudinary.uploader.destroy(img.publicId, { resource_type: 'image' }).catch(() => {}));
             });
         }
-
         if (car.documents && car.documents.length > 0) {
             car.documents.forEach(doc => {
-                const cleanName = path.basename(doc.filename);
-                const fullPath = path.join(__dirname, 'uploads', cleanName);
-                if (fs.existsSync(fullPath)) { fs.unlinkSync(fullPath); }
+                if (doc.publicId) destroyJobs.push(cloudinary.uploader.destroy(doc.publicId, { resource_type: doc.resourceType || 'raw' }).catch(() => {}));
             });
         }
+        await Promise.all(destroyJobs);
 
         await Car.findByIdAndDelete(req.params.id);
         res.json({ message: "Vehicle and all associated files deleted successfully." });
@@ -275,22 +283,30 @@ app.patch('/api/cars/:id/feature', requireAuth, requireAdmin, async (req, res) =
     } catch (error) { res.status(400).json({ error: "Failed to feature car." }); }
 });
 
-app.patch('/api/cars/:id/documents', requireAuth, requireAdmin, upload.array('docs', 5), async (req, res) => {
+app.patch('/api/cars/:id/documents', requireAuth, requireAdmin, uploadDocs.array('docs', 5), async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
         if (!car) return res.status(404).json({ error: "Car not found" });
-        const newDocs = req.files.map(f => ({ originalName: f.originalname, filename: f.filename }));
+        const newDocs = (req.files || []).map(f => ({
+            originalName: f.originalname,
+            url: f.path,
+            publicId: f.filename,
+            resourceType: f.mimetype && f.mimetype.startsWith('image/') ? 'image' : 'raw'
+        }));
         const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $push: { documents: { $each: newDocs } } }, { new: true });
         res.json(updatedCar);
-    } catch (error) { res.status(400).json({ error: "Failed to upload documents." }); }
+    } catch (error) {
+        console.error("Error uploading documents:", error);
+        res.status(400).json({ error: "Failed to upload documents." });
+    }
 });
 
 // Add more photos to an existing car (admin only)
-app.patch('/api/cars/:id/photos', requireAuth, requireAdmin, upload.array('photos', 30), async (req, res) => {
+app.patch('/api/cars/:id/photos', requireAuth, requireAdmin, uploadPhotos.array('photos', 30), async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
         if (!car) return res.status(404).json({ error: "Car not found" });
-        const newPhotos = (req.files || []).map(f => f.filename);
+        const newPhotos = (req.files || []).map(f => ({ url: f.path, publicId: f.filename }));
         if (newPhotos.length === 0) return res.status(400).json({ error: "No photos received." });
         const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $push: { images: { $each: newPhotos } } }, { new: true });
         res.json(updatedCar);
@@ -303,9 +319,10 @@ app.patch('/api/cars/:id/photos', requireAuth, requireAdmin, upload.array('photo
 // Remove a single photo from a car (admin only)
 app.patch('/api/cars/:id/photos/remove', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { filename } = req.body;
-        if (!filename) return res.status(400).json({ error: "filename is required." });
-        const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $pull: { images: filename } }, { new: true });
+        const { publicId } = req.body;
+        if (!publicId) return res.status(400).json({ error: "publicId is required." });
+        await cloudinary.uploader.destroy(publicId, { resource_type: 'image' }).catch(() => {});
+        const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $pull: { images: { publicId } } }, { new: true });
         if (!updatedCar) return res.status(404).json({ error: "Car not found" });
         res.json(updatedCar);
     } catch (error) {
@@ -316,10 +333,13 @@ app.patch('/api/cars/:id/photos/remove', requireAuth, requireAdmin, async (req, 
 // Remove a single document from a car (admin only)
 app.patch('/api/cars/:id/documents/remove', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { filename } = req.body;
-        if (!filename) return res.status(400).json({ error: "filename is required." });
-        const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $pull: { documents: { filename } } }, { new: true });
-        if (!updatedCar) return res.status(404).json({ error: "Car not found" });
+        const { publicId } = req.body;
+        if (!publicId) return res.status(400).json({ error: "publicId is required." });
+        const car = await Car.findById(req.params.id);
+        if (!car) return res.status(404).json({ error: "Car not found" });
+        const doc = (car.documents || []).find(d => d.publicId === publicId);
+        await cloudinary.uploader.destroy(publicId, { resource_type: doc?.resourceType || 'raw' }).catch(() => {});
+        const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $pull: { documents: { publicId } } }, { new: true });
         res.json(updatedCar);
     } catch (error) {
         res.status(400).json({ error: "Failed to remove document." });
