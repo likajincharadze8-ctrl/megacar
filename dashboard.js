@@ -654,9 +654,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!modalBody) return;
         let galleryHtml = '';
         if (car.images && car.images.length > 0) {
-            car.images.forEach(img => { 
+            car.images.forEach(img => {
                 const imgPath = img.startsWith('/uploads/') ? img : `/uploads/${img}`;
-                galleryHtml += `<img src="${imgPath}" style="width:100px; height:100px; object-fit:cover; margin:5px; border-radius:4px;">`; 
+                const removeBtn = role === 'admin'
+                    ? `<button onclick="window.removeCarPhoto('${car._id}','${img}')" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;">&times;</button>`
+                    : '';
+                galleryHtml += `<div style="position:relative;display:inline-block;margin:5px;">
+                    <img src="${imgPath}" style="width:100px; height:100px; object-fit:cover; border-radius:4px;">
+                    ${removeBtn}
+                </div>`;
             });
         } else {
             galleryHtml = '<p style="color: #888;">No photos uploaded.</p>';
@@ -754,8 +760,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <h3 style="margin-top: 20px; color:#fff;">Gallery</h3>
             <div class="modal-gallery" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">${galleryHtml}</div>
+            ${role === 'admin' ? `
+            <div style="display:flex; gap:10px; margin-top:14px;">
+                <input type="file" id="newPhotoFile-${car._id}" multiple accept="image/*" style="background:#000; color:#fff; border:1px solid #333; padding:10px; flex:1;">
+                <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="window.uploadCarPhotos('${car._id}')">Upload</button>
+            </div>
+            ` : ''}
         `;
         carModal.classList.remove('hidden');
+    };
+
+    window.uploadCarPhotos = async (carId) => {
+        const input = document.getElementById(`newPhotoFile-${carId}`);
+        if (!input || !input.files || input.files.length === 0) { alert('აირჩიე მინიმუმ ერთი ფოტო.'); return; }
+        const formData = new FormData();
+        for (let i = 0; i < input.files.length; i++) formData.append('photos', input.files[i]);
+        try {
+            const res = await fetch(`/api/cars/${carId}/photos`, { method: 'PATCH', body: formData });
+            const payload = await res.json().catch(() => null);
+            if (!res.ok) { alert(payload?.error || 'ფოტოების ატვირთვა ვერ მოხერხდა.'); return; }
+            await loadCars();
+            const updated = window.maiCars.find(c => c._id === carId);
+            if (updated) window.openCarMenu(updated);
+        } catch (err) {
+            console.error('Photo upload failed.', err);
+            alert('ფოტოების ატვირთვა ვერ მოხერხდა.');
+        }
+    };
+
+    window.removeCarPhoto = async (carId, filename) => {
+        if (!confirm('ფოტოს წაშლა?')) return;
+        try {
+            const res = await fetch(`/api/cars/${carId}/photos/remove`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            if (!res.ok) { alert('ფოტოს წაშლა ვერ მოხერხდა.'); return; }
+            await loadCars();
+            const updated = window.maiCars.find(c => c._id === carId);
+            if (updated) window.openCarMenu(updated);
+        } catch (err) {
+            console.error('Photo delete failed.', err);
+            alert('ფოტოს წაშლა ვერ მოხერხდა.');
+        }
     };
 
     // 7. FORM SUBMISSIONS

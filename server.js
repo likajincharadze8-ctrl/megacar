@@ -285,6 +285,34 @@ app.patch('/api/cars/:id/documents', requireAuth, requireAdmin, upload.array('do
     } catch (error) { res.status(400).json({ error: "Failed to upload documents." }); }
 });
 
+// Add more photos to an existing car (admin only)
+app.patch('/api/cars/:id/photos', requireAuth, requireAdmin, upload.array('photos', 30), async (req, res) => {
+    try {
+        const car = await Car.findById(req.params.id);
+        if (!car) return res.status(404).json({ error: "Car not found" });
+        const newPhotos = (req.files || []).map(f => f.filename);
+        if (newPhotos.length === 0) return res.status(400).json({ error: "No photos received." });
+        const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $push: { images: { $each: newPhotos } } }, { new: true });
+        res.json(updatedCar);
+    } catch (error) {
+        console.error("Error uploading photos:", error);
+        res.status(400).json({ error: "Failed to upload photos." });
+    }
+});
+
+// Remove a single photo from a car (admin only)
+app.patch('/api/cars/:id/photos/remove', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { filename } = req.body;
+        if (!filename) return res.status(400).json({ error: "filename is required." });
+        const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $pull: { images: filename } }, { new: true });
+        if (!updatedCar) return res.status(404).json({ error: "Car not found" });
+        res.json(updatedCar);
+    } catch (error) {
+        res.status(400).json({ error: "Failed to remove photo." });
+    }
+});
+
 // --- 8. INVOICE ROUTES ---
 
 // GET invoices: admin sees all, dealer sees only their own
