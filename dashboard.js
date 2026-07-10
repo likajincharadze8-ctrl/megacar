@@ -649,52 +649,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // 5f. OVERVIEW BALANCE (pending profit share − outstanding financing, and after open invoices)
-    async function loadOverviewBalance() {
-        const elBalance = document.getElementById('ovBalance');
-        const elBalanceAfter = document.getElementById('ovBalanceAfterPayment');
-        if (!elBalance) return;
-
-        try {
-            const [finRes, shareRes, invRes] = await Promise.all([
-                fetch('/api/financings'),
-                fetch('/api/profit-shares'),
-                fetch('/api/invoices')
-            ]);
-            const financings = await finRes.json().catch(() => []);
-            const shares = await shareRes.json().catch(() => []);
-            const invoices = await invRes.json().catch(() => []);
-
-            const pendingProfit = (Array.isArray(shares) ? shares : [])
-                .filter(s => s.status !== 'Paid')
-                .reduce((sum, s) => sum + (s.dealerAmount || 0), 0);
-
-            const outstandingFinancing = (Array.isArray(financings) ? financings : [])
-                .reduce((sum, f) => {
-                    const remainingPrincipal = Math.max(0, (f.financedAmount || 0) - (f.amountRepaid || 0));
-                    const unpaidFee = f.feePaid ? 0 : (f.fixedFee || 0);
-                    return sum + remainingPrincipal + unpaidFee;
-                }, 0);
-
-            const balance = pendingProfit - outstandingFinancing;
-
-            const outstandingInvoices = (Array.isArray(invoices) ? invoices : [])
-                .reduce((sum, inv) => sum + Math.max(0, (inv.totalAmount || 0) - (inv.amountPaid || 0)), 0);
-
-            const balanceAfterPayment = balance - outstandingInvoices;
-
-            elBalance.textContent = (balance < 0 ? '-$' : '$') + Math.abs(balance).toLocaleString();
-            elBalance.style.color = balance < 0 ? 'var(--red)' : 'var(--gold)';
-
-            if (elBalanceAfter) {
-                elBalanceAfter.textContent = (balanceAfterPayment < 0 ? '-$' : '$') + Math.abs(balanceAfterPayment).toLocaleString();
-                elBalanceAfter.style.color = balanceAfterPayment < 0 ? 'var(--red)' : 'var(--green)';
-            }
-        } catch (err) {
-            console.error('Failed to load overview balance.', err);
-        }
-    }
-
     // 6. MODAL MENU
     window.openCarMenu = (car) => {
         if (!modalBody) return;
@@ -888,6 +842,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // INITIATE
     loadCars();
-    loadOverviewBalance();
 });
 
