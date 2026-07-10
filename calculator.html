@@ -227,32 +227,24 @@
                 towingCost = rates[selectedLoc][portIdx];
             }
 
-            const mapping = VEHICLE_CONTAINER_MAP[vehicleTypeSelect.value];
-            let containerShare = null;
-            if (mapping && portIdx > -1 && mapping.row) {
-                const containerTotal = mapping.row[portIdx];
-                if (containerTotal !== null && containerTotal !== undefined) {
-                    containerShare = Math.round((containerTotal / mapping.divisor) * 100) / 100;
-                }
-            }
-
+            // NOTE: the towing rate tables already include the container share and
+            // the dealer's margin baked in (this is the dealer's own finalized quote,
+            // not a raw carrier rate sheet) — do NOT add container cost or a service
+            // fee on top of it. The vehicle-type selector is kept in the UI for future
+            // use but currently has no effect on the total.
             const dispTowing = document.getElementById('dispTowing');
             const dispContainer = document.getElementById('dispContainer');
             const dispShipping = document.getElementById('dispShipping');
-            document.getElementById('dispServiceFee').innerText = `$${SERVICE_FEE}`;
 
             dispTowing.innerText = (towingCost === null || towingCost === undefined)
                 ? (selectedLoc && port ? 'არ არის ხელმისაწვდომი' : '$0')
                 : `$${towingCost.toLocaleString()}`;
-
-            dispContainer.innerText = (containerShare === null || containerShare === undefined)
-                ? (port ? 'არ არის ხელმისაწვდომი' : '$0')
-                : `$${containerShare.toLocaleString()}`;
+            dispContainer.innerText = '$0';
 
             let shippingTotal = 0;
             let shippingValid = false;
-            if (towingCost !== null && towingCost !== undefined && containerShare !== null && containerShare !== undefined) {
-                shippingTotal = towingCost + containerShare + SERVICE_FEE;
+            if (towingCost !== null && towingCost !== undefined) {
+                shippingTotal = towingCost;
                 shippingValid = true;
                 dispShipping.innerText = `$${shippingTotal.toLocaleString()}`;
             } else {
