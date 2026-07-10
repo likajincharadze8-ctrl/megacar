@@ -669,15 +669,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!modalBody) return;
         let galleryHtml = '';
         if (car.images && car.images.length > 0) {
-            car.images.forEach(img => {
+            car.images.forEach((img, idx) => {
                 const isLegacy = typeof img === 'string';
                 const imgPath = isLegacy ? (img.startsWith('/uploads/') || img.startsWith('http') ? img : `/uploads/${img}`) : (img.url || '');
                 const imgId = isLegacy ? img : (img.publicId || '');
-                const removeBtn = (role === 'admin' && imgId)
-                    ? `<button onclick="window.removeCarPhoto('${car._id}','${imgId}')" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;">&times;</button>`
+                const deleteArg = imgId ? `'${imgId}'` : 'null';
+                const removeBtn = role === 'admin'
+                    ? `<button onclick="window.removeCarPhoto('${car._id}',${deleteArg},${idx})" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;z-index:2;">&times;</button>`
                     : '';
+                const brokenFallback = `this.onerror=null;this.style.objectFit='contain';this.style.padding='10px';this.style.background='#1a1a1a';this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23666%22 stroke-width=%221.5%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22/><circle cx=%228.5%22 cy=%228.5%22 r=%221.5%22/><path d=%22M21 15l-5-5L5 21%22/></svg>';`;
                 galleryHtml += `<div style="position:relative;display:inline-block;margin:5px;">
-                    <img src="${imgPath}" onclick="window.openLightbox('${imgPath.replace(/'/g, "\\'")}')" style="width:100px; height:100px; object-fit:cover; border-radius:4px; cursor:zoom-in;">
+                    <img src="${imgPath}" onerror="${brokenFallback}" onclick="window.openLightbox('${imgPath.replace(/'/g, "\\'")}')" style="width:100px; height:100px; object-fit:cover; border-radius:4px; cursor:zoom-in;">
                     ${removeBtn}
                 </div>`;
             });
@@ -694,19 +696,20 @@ document.addEventListener('DOMContentLoaded', function() {
             let docsHtml = '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px;">';
             const IMAGE_EXT = /\.(jpe?g|png|gif|webp|bmp)$/i;
             if (car.documents && car.documents.length > 0) {
-                car.documents.forEach(doc => {
+                car.documents.forEach((doc, idx) => {
                     const isLegacy = !doc.url;
                     const docPath = isLegacy
                         ? (doc.filename ? (doc.filename.startsWith('/uploads/') ? doc.filename : `/uploads/${doc.filename}`) : '')
                         : doc.url;
                     const docId = isLegacy ? (doc.filename || '') : (doc.publicId || '');
-                    const removeBtn = (canUploadDocs && docId)
-                        ? `<button onclick="window.deleteCarDoc('${car._id}','${docId}')" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;">&times;</button>`
+                    const deleteArg = docId ? `'${docId}'` : 'null';
+                    const removeBtn = canUploadDocs
+                        ? `<button onclick="window.deleteCarDoc('${car._id}',${deleteArg},${idx})" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;z-index:2;">&times;</button>`
                         : '';
                     if (IMAGE_EXT.test(doc.originalName || docPath)) {
                         docsHtml += `<div style="position:relative;">
                             <a href="${docPath}" target="_blank">
-                                <img src="${docPath}" style="width:90px;height:90px;object-fit:cover;border-radius:4px;border:1px solid #333;">
+                                <img src="${docPath}" onerror="this.onerror=null;this.style.opacity='0.3';" style="width:90px;height:90px;object-fit:cover;border-radius:4px;border:1px solid #333;">
                             </a>
                             ${removeBtn}
                         </div>`;
@@ -825,13 +828,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    window.removeCarPhoto = async (carId, publicId) => {
+    window.removeCarPhoto = async (carId, publicId, index) => {
         if (!confirm('ფოტოს წაშლა?')) return;
         try {
             const res = await fetch(`/api/cars/${carId}/photos/remove`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ publicId })
+                body: JSON.stringify({ publicId, index })
             });
             if (!res.ok) { alert('ფოტოს წაშლა ვერ მოხერხდა.'); return; }
             await loadCars();
@@ -843,13 +846,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    window.deleteCarDoc = async (carId, publicId) => {
+    window.deleteCarDoc = async (carId, publicId, index) => {
         if (!confirm('დოკუმენტის წაშლა?')) return;
         try {
             const res = await fetch(`/api/cars/${carId}/documents/remove`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ publicId })
+                body: JSON.stringify({ publicId, index })
             });
             if (!res.ok) { alert('დოკუმენტის წაშლა ვერ მოხერხდა.'); return; }
             await loadCars();

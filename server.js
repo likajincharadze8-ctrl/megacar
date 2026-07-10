@@ -346,13 +346,23 @@ app.patch('/api/cars/:id/photos', requireAuth, requireAdmin, uploadPhotos.array(
 // Remove a single photo from a car (admin only)
 app.patch('/api/cars/:id/photos/remove', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { publicId } = req.body;
-        if (!publicId) return res.status(400).json({ error: "publicId is required." });
-        await cloudinary.uploader.destroy(publicId, { resource_type: 'image' }).catch(() => {});
-        const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $pull: { images: { publicId } } }, { new: true });
-        if (!updatedCar) return res.status(404).json({ error: "Car not found" });
-        res.json(updatedCar);
+        const { publicId, index } = req.body;
+        const car = await Car.findById(req.params.id);
+        if (!car) return res.status(404).json({ error: "Car not found" });
+
+        if (publicId) {
+            await cloudinary.uploader.destroy(publicId, { resource_type: 'image' }).catch(() => {});
+            car.images = car.images.filter(img => img.publicId !== publicId);
+        } else if (index !== undefined && index !== null && car.images[index]) {
+            car.images.splice(index, 1); // legacy/broken entry with no publicId — remove by position
+        } else {
+            return res.status(400).json({ error: "publicId or a valid index is required." });
+        }
+
+        await car.save();
+        res.json(car);
     } catch (error) {
+        console.error("Error removing photo:", error);
         res.status(400).json({ error: "Failed to remove photo." });
     }
 });
@@ -360,14 +370,22 @@ app.patch('/api/cars/:id/photos/remove', requireAuth, requireAdmin, async (req, 
 // Remove a single document from a car (admin only)
 app.patch('/api/cars/:id/documents/remove', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { publicId } = req.body;
-        if (!publicId) return res.status(400).json({ error: "publicId is required." });
+        const { publicId, index } = req.body;
         const car = await Car.findById(req.params.id);
         if (!car) return res.status(404).json({ error: "Car not found" });
-        const doc = (car.documents || []).find(d => d.publicId === publicId);
-        await cloudinary.uploader.destroy(publicId, { resource_type: doc?.resourceType || 'raw' }).catch(() => {});
-        const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $pull: { documents: { publicId } } }, { new: true });
-        res.json(updatedCar);
+
+        if (publicId) {
+            const doc = (car.documents || []).find(d => d.publicId === publicId);
+            await cloudinary.uploader.destroy(publicId, { resource_type: doc?.resourceType || 'raw' }).catch(() => {});
+            car.documents = car.documents.filter(d => d.publicId !== publicId);
+        } else if (index !== undefined && index !== null && car.documents[index]) {
+            car.documents.splice(index, 1);
+        } else {
+            return res.status(400).json({ error: "publicId or a valid index is required." });
+        }
+
+        await car.save();
+        res.json(car);
     } catch (error) {
         res.status(400).json({ error: "Failed to remove document." });
     }
