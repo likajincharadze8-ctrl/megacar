@@ -7,6 +7,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const role = String(userData.role || '').toLowerCase();
     const currentUsername = userData.username;
 
+    // Attach the login token as an Authorization header on every same-origin API call.
+    // Mobile browsers (especially iOS Safari / in-app browsers / PWAs) can be unreliable
+    // about sending the auth cookie, so this header is a robust fallback the backend also accepts.
+    if (userData.token && !window._maiFetchPatched) {
+        window._maiFetchPatched = true;
+        const originalFetch = window.fetch.bind(window);
+        window.fetch = (input, init = {}) => {
+            const headers = new Headers(init.headers || (typeof input !== 'string' ? input.headers : undefined) || {});
+            if (!headers.has('Authorization')) headers.set('Authorization', 'Bearer ' + userData.token);
+            return originalFetch(input, { ...init, headers });
+        };
+    }
+
     // 2. DOM ELEMENTS
     const userDisplay = document.getElementById('user-display');
     const carGrid = document.getElementById('carGrid');

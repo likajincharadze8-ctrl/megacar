@@ -53,7 +53,11 @@ app.use(express.static(__dirname));
 
 // --- 2. AUTHENTICATION LOCK (MIDDLEWARE) ---
 const requireAuth = (req, res, next) => {
-    const token = req.cookies.mai_token;
+    let token = req.cookies.mai_token;
+    if (!token) {
+        const authHeader = req.headers.authorization || '';
+        if (authHeader.startsWith('Bearer ')) token = authHeader.slice(7);
+    }
     if (!token) return res.status(401).json({ error: "Access Denied: No Token Provided" });
     try {
         const verified = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key');
@@ -149,7 +153,7 @@ app.post('/api/auth/login', async (req, res) => {
             maxAge: 8 * 60 * 60 * 1000 
         });
 
-        res.json({ message: "Login successful", username: user.username, role: String(user.role || '').toLowerCase() });
+        res.json({ message: "Login successful", username: user.username, role: String(user.role || '').toLowerCase(), token });
     } catch (error) { res.status(500).json({ error: "Server error" }); }
 });
 
