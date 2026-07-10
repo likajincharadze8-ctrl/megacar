@@ -125,7 +125,7 @@
     <script src="container-rates.js"></script>
     <script>
         const PORTS = ['GA', 'NY', 'CA', 'TX', 'WA', 'VA'];
-        const SERVICE_FEE = 200;
+        const DEALER_ADJUSTMENT = -120;
 
         // Vehicle type -> which container row to use + how many vehicles share that container.
         // sedan/jeep come directly from the dealer's instructions (sedan=4/container, jeep=3/container).
@@ -244,7 +244,7 @@
             let shippingTotal = 0;
             let shippingValid = false;
             if (towingCost !== null && towingCost !== undefined) {
-                shippingTotal = towingCost;
+                shippingTotal = towingCost + DEALER_ADJUSTMENT;
                 shippingValid = true;
                 dispShipping.innerText = `$${shippingTotal.toLocaleString()}`;
             } else {
