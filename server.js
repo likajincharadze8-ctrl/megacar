@@ -313,6 +313,19 @@ app.patch('/api/cars/:id/photos/remove', requireAuth, requireAdmin, async (req, 
     }
 });
 
+// Remove a single document from a car (admin only)
+app.patch('/api/cars/:id/documents/remove', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { filename } = req.body;
+        if (!filename) return res.status(400).json({ error: "filename is required." });
+        const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $pull: { documents: { filename } } }, { new: true });
+        if (!updatedCar) return res.status(404).json({ error: "Car not found" });
+        res.json(updatedCar);
+    } catch (error) {
+        res.status(400).json({ error: "Failed to remove document." });
+    }
+});
+
 // --- 8. INVOICE ROUTES ---
 
 // GET invoices: admin sees all, dealer sees only their own

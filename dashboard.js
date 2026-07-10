@@ -674,16 +674,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const canUploadDocs = role === 'admin'; // backend also enforces admin-only for document uploads
         let adminTools = '';
         if (canEditCar) {
-            let docsHtml = '<ul style="list-style:none; padding:0; margin-bottom:10px;">';
+            let docsHtml = '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px;">';
+            const IMAGE_EXT = /\.(jpe?g|png|gif|webp|bmp)$/i;
             if (car.documents && car.documents.length > 0) {
-                car.documents.forEach(doc => { 
+                car.documents.forEach(doc => {
                     const docPath = doc.filename.startsWith('/uploads/') ? doc.filename : `/uploads/${doc.filename}`;
-                    docsHtml += `<li style="margin-bottom:5px;"><a href="${docPath}" target="_blank" style="color:#ffcc00; text-decoration:none;">📄 ${doc.originalName}</a></li>`; 
+                    const removeBtn = canUploadDocs
+                        ? `<button onclick="window.deleteCarDoc('${car._id}','${doc.filename}')" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;">&times;</button>`
+                        : '';
+                    if (IMAGE_EXT.test(doc.filename)) {
+                        docsHtml += `<div style="position:relative;">
+                            <a href="${docPath}" target="_blank">
+                                <img src="${docPath}" style="width:90px;height:90px;object-fit:cover;border-radius:4px;border:1px solid #333;">
+                            </a>
+                            ${removeBtn}
+                        </div>`;
+                    } else {
+                        docsHtml += `<div style="position:relative;display:flex;align-items:center;background:#111;border-radius:4px;padding:8px 28px 8px 10px;">
+                            <a href="${docPath}" target="_blank" style="color:#ffcc00; text-decoration:none; font-size:13px;">📄 ${doc.originalName}</a>
+                            ${removeBtn}
+                        </div>`;
+                    }
                 });
             } else {
-                docsHtml += '<li style="color: #888; font-size: 14px;">No documents.</li>';
+                docsHtml += '<p style="color: #888; font-size: 14px;">No documents.</p>';
             }
-            docsHtml += '</ul>';
+            docsHtml += '</div>';
 
             const uploadControls = canUploadDocs ? `
                 <div style="display:flex; gap:10px; margin-top:10px;">
@@ -803,6 +819,24 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (err) {
             console.error('Photo delete failed.', err);
             alert('ფოტოს წაშლა ვერ მოხერხდა.');
+        }
+    };
+
+    window.deleteCarDoc = async (carId, filename) => {
+        if (!confirm('დოკუმენტის წაშლა?')) return;
+        try {
+            const res = await fetch(`/api/cars/${carId}/documents/remove`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            if (!res.ok) { alert('დოკუმენტის წაშლა ვერ მოხერხდა.'); return; }
+            await loadCars();
+            const updated = window.maiCars.find(c => c._id === carId);
+            if (updated) window.openCarMenu(updated);
+        } catch (err) {
+            console.error('Document delete failed.', err);
+            alert('დოკუმენტის წაშლა ვერ მოხერხდა.');
         }
     };
 
