@@ -664,7 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ? `<button onclick="window.removeCarPhoto('${car._id}','${imgId}')" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;">&times;</button>`
                     : '';
                 galleryHtml += `<div style="position:relative;display:inline-block;margin:5px;">
-                    <img src="${imgPath}" style="width:100px; height:100px; object-fit:cover; border-radius:4px;">
+                    <img src="${imgPath}" onclick="window.openLightbox('${imgPath.replace(/'/g, "\\'")}')" style="width:100px; height:100px; object-fit:cover; border-radius:4px; cursor:zoom-in;">
                     ${removeBtn}
                 </div>`;
             });
@@ -920,7 +920,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 9. GENERAL LISTENERS
     if (closeModal) closeModal.onclick = () => carModal?.classList.add('hidden');
-    
+
+    // Image lightbox (click a thumbnail to view full-size + download)
+    const imageLightbox = document.getElementById('imageLightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxDownload = document.getElementById('lightboxDownload');
+    const closeLightbox = document.getElementById('closeLightbox');
+
+    window.openLightbox = (url) => {
+        if (!imageLightbox || !lightboxImg) return;
+        lightboxImg.src = url;
+        if (lightboxDownload) {
+            // Cloudinary: inserting fl_attachment forces a real download instead of opening in-browser
+            const downloadUrl = url.includes('res.cloudinary.com') && url.includes('/upload/')
+                ? url.replace('/upload/', '/upload/fl_attachment/')
+                : url;
+            lightboxDownload.href = downloadUrl;
+        }
+        imageLightbox.classList.remove('hidden');
+    };
+    if (closeLightbox) closeLightbox.onclick = () => imageLightbox?.classList.add('hidden');
+    if (imageLightbox) imageLightbox.addEventListener('click', (e) => {
+        if (e.target === imageLightbox) imageLightbox.classList.add('hidden');
+    });
+
     const logoutBtn = document.querySelector('.logout');
     if (logoutBtn) {
         logoutBtn.onclick = (e) => { 
