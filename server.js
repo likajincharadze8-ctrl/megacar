@@ -4,7 +4,6 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const { v2: cloudinary } = require('cloudinary');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -87,13 +86,37 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const photoStorage = new CloudinaryStorage({
-    cloudinary,
-    params: { folder: 'megacars/cars', resource_type: 'image' }
-});
-const docStorage = new CloudinaryStorage({
-    cloudinary,
-    params: { folder: 'megacars/documents', resource_type: 'auto' }
+// Minimal multer storage engine talking directly to Cloudinary's upload_stream API.
+// (Not using the 'multer-storage-cloudinary' package — its peer dependency pins
+// cloudinary@^1.x, which conflicts with the patched cloudinary@^2.7+ we need for
+// a known security fix, and breaks `npm ci` on Render with an ERESOLVE error.)
+class CloudinaryMulterStorage {
+    constructor({ folder, resourceType }) {
+        this.folder = folder;
+        this.resourceType = resourceType; // 'image' | 'auto' | function(req, file)
+    }
+    _handleFile(req, file, cb) {
+        const resource_type = typeof this.resourceType === 'function'
+            ? this.resourceType(req, file)
+            : (this.resourceType || 'auto');
+        const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: this.folder, resource_type },
+            (error, result) => {
+                if (error) return cb(error);
+                cb(null, { path: result.secure_url, filename: result.public_id, size: result.bytes, resourceType: result.resource_type });
+            }
+        );
+        file.stream.pipe(uploadStream);
+    }
+    _removeFile(req, file, cb) {
+        cloudinary.uploader.destroy(file.filename, {}, cb);
+    }
+}
+
+const photoStorage = new CloudinaryMulterStorage({ folder: 'megacars/cars', resourceType: 'image' });
+const docStorage = new CloudinaryMulterStorage({
+    folder: 'megacars/documents',
+    resourceType: (req, file) => (file.mimetype && file.mimetype.startsWith('image/') ? 'image' : 'raw')
 });
 
 const uploadPhotos = multer({ storage: photoStorage, limits: { files: 30, fileSize: 50 * 1024 * 1024 } });
@@ -295,7 +318,7 @@ app.patch('/api/cars/:id/documents', requireAuth, requireAdmin, uploadDocs.array
             originalName: f.originalname,
             url: f.path,
             publicId: f.filename,
-            resourceType: f.mimetype && f.mimetype.startsWith('image/') ? 'image' : 'raw'
+            resourceType: f.resourceType || (f.mimetype && f.mimetype.startsWith('image/') ? 'image' : 'raw')
         }));
         const updatedCar = await Car.findByIdAndUpdate(req.params.id, { $push: { documents: { $each: newDocs } } }, { new: true });
         res.json(updatedCar);
