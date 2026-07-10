@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="car-image">
                         ${previewImg ? `<img src="${previewImg}">` : '<div style="padding:20px; text-align:center; color:#555;">No Photo</div>'}
                         ${role === 'admin' ? `<button style="position:absolute; top:10px; right:40px; background:#111; color:#fff; border:none; padding:5px 10px; cursor:pointer; z-index:10;" onclick="event.stopPropagation(); window.featureCar('${car._id}')">&#9733;</button>` : ''}
-                        ${(role === 'admin' || car.dealerId === currentUsername) ? `<button style="position:absolute; top:10px; right:10px; background:#ff4444; color:#fff; border:none; padding:5px 10px; cursor:pointer; z-index:10;" onclick="event.stopPropagation(); window.deleteCar('${car._id}')">&times;</button>` : ''}
+                        ${role === 'admin' ? `<button style="position:absolute; top:10px; right:10px; background:#ff4444; color:#fff; border:none; padding:5px 10px; cursor:pointer; z-index:10;" onclick="event.stopPropagation(); window.deleteCar('${car._id}')">&times;</button>` : ''}
                     </div>
                     <div class="car-details">
                         <h4>${car.makeModel}</h4>
