@@ -314,8 +314,10 @@ app.patch('/api/cars/:id/documents', requireAuth, requireAdmin, uploadDocs.array
     try {
         const car = await Car.findById(req.params.id);
         if (!car) return res.status(404).json({ error: "Car not found" });
+        const title = (req.body.title || '').trim();
         const newDocs = (req.files || []).map(f => ({
             originalName: f.originalname,
+            title: title || undefined,
             url: f.path,
             publicId: f.filename,
             resourceType: f.resourceType || (f.mimetype && f.mimetype.startsWith('image/') ? 'image' : 'raw')

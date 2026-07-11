@@ -138,12 +138,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.uploadDoc = async (carId) => {
         const fileInput = document.getElementById(`newDocFile-${carId}`);
+        const titleInput = document.getElementById(`newDocTitle-${carId}`);
         if (!fileInput || !fileInput.files.length) return alert("Select a file.");
         const formData = new FormData();
-        for(let i=0; i<fileInput.files.length; i++) { formData.append('docs', fileInput.files[i]); }
-        await fetch(`/api/cars/${carId}/documents`, { method: 'PATCH', body: formData });
-        if (carModal) carModal.classList.add('hidden');
-        loadCars();
+        for (let i = 0; i < fileInput.files.length; i++) formData.append('docs', fileInput.files[i]);
+        if (titleInput && titleInput.value.trim()) formData.append('title', titleInput.value.trim());
+        try {
+            const res = await fetch(`/api/cars/${carId}/documents`, { method: 'PATCH', body: formData });
+            const payload = await res.json().catch(() => null);
+            if (!res.ok) { alert(payload?.error || 'დოკუმენტის ატვირთვა ვერ მოხერხდა.'); return; }
+            await loadCars();
+            const updated = window.maiCars.find(c => c._id === carId);
+            if (updated) window.openCarMenu(updated);
+        } catch (err) {
+            console.error('Document upload failed.', err);
+            alert('დოკუმენტის ატვირთვა ვერ მოხერხდა.');
+        }
     };
 
     window.submitEditCar = async (e, carId) => {
@@ -706,16 +716,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     const removeBtn = canUploadDocs
                         ? `<button onclick="window.deleteCarDoc('${car._id}',${deleteArg},${idx})" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;z-index:2;">&times;</button>`
                         : '';
+                    const displayLabel = doc.title || doc.originalName || 'დოკუმენტი';
                     if (IMAGE_EXT.test(doc.originalName || docPath)) {
-                        docsHtml += `<div style="position:relative;">
-                            <a href="${docPath}" target="_blank">
+                        docsHtml += `<div style="position:relative;text-align:center;">
+                            <a href="${docPath}" target="_blank" title="${displayLabel}">
                                 <img src="${docPath}" onerror="this.onerror=null;this.style.opacity='0.3';" style="width:90px;height:90px;object-fit:cover;border-radius:4px;border:1px solid #333;">
                             </a>
+                            ${doc.title ? `<div style="font-size:11px;color:#aaa;margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${doc.title}</div>` : ''}
                             ${removeBtn}
                         </div>`;
                     } else {
                         docsHtml += `<div style="position:relative;display:flex;align-items:center;background:#111;border-radius:4px;padding:8px 28px 8px 10px;">
-                            <a href="${docPath}" target="_blank" style="color:#ffcc00; text-decoration:none; font-size:13px;">📄 ${doc.originalName}</a>
+                            <a href="${docPath}" target="_blank" style="color:#ffcc00; text-decoration:none; font-size:13px;">📄 ${displayLabel}</a>
                             ${removeBtn}
                         </div>`;
                     }
@@ -726,9 +738,12 @@ document.addEventListener('DOMContentLoaded', function() {
             docsHtml += '</div>';
 
             const uploadControls = canUploadDocs ? `
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <input type="file" id="newDocFile-${car._id}" multiple style="background:#000; color:#fff; border:1px solid #333; padding:10px; flex:1;">
-                    <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="window.uploadDoc('${car._id}')">Upload</button>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                    <input type="text" id="newDocTitle-${car._id}" placeholder="დოკუმენტის დასახელება (მაგ. ტაიტლი, ინვოისი, დაზღვევა)" style="background:#000; color:#fff; border:1px solid #333; padding:10px; border-radius:4px;">
+                    <div style="display:flex; gap:10px;">
+                        <input type="file" id="newDocFile-${car._id}" multiple style="background:#000; color:#fff; border:1px solid #333; padding:10px; flex:1;">
+                        <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="window.uploadDoc('${car._id}')">Upload</button>
+                    </div>
                 </div>
             ` : '';
 

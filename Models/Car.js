@@ -20,7 +20,7 @@ const carSchema = new mongoose.Schema(
     recipientPhone: { type: String, trim: true },
     status: { type: String, default: 'Purchased' },
     images: [{ url: String, publicId: String }],
-    documents: [{ originalName: String, url: String, publicId: String, resourceType: String }],
+    documents: [{ originalName: String, title: String, url: String, publicId: String, resourceType: String }],
     isFeatured: { type: Boolean, default: false },
   },
   { timestamps: true }
