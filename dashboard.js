@@ -797,6 +797,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p style="color:#ccc; margin-bottom:5px;">Phone: ${car.recipientPhone || 'N/A'}</p>
                 </div>
             </div>
+            ${car.notes ? `<p style="color:#ccc; margin-top:12px;"><strong style="color:#ffcc00;">TITLE:</strong> ${car.notes}</p>` : ''}
 
             <div class="modal-details-box" style="margin-top: 15px;">
                 <p style="display: flex; align-items: center; justify-content:space-between;">
@@ -910,8 +911,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ notes: textarea.value })
             });
-            if (!res.ok) { alert('შენახვა ვერ მოხერხდა.'); return; }
+            const payload = await res.json().catch(() => null);
+            if (!res.ok) { alert(payload?.error || 'შენახვა ვერ მოხერხდა.'); return; }
             await loadCars();
+            const updated = window.maiCars.find(c => c._id === carId);
+            if (updated) window.openCarMenu(updated);
         } catch (err) {
             console.error('Save notes failed.', err);
             alert('შენახვა ვერ მოხერხდა.');
