@@ -136,6 +136,8 @@ h3.sec-title{font-family:'Noto Serif Georgian',serif;font-weight:700;font-size:2
   overflow-y:auto;padding:26px;position:relative}
 .close-btn{position:absolute;top:14px;right:18px;font-size:26px;cursor:pointer;color:var(--muted)}
 .close-btn:hover{color:var(--gold)}
+.modal-details-box{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;flex:1;min-width:200px}
+.car-status-badge{background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:6px 12px;border-radius:6px;font-size:13px}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:200}
 .lightbox img{max-width:92%;max-height:92%}
 .close-lightbox{position:absolute;top:20px;right:28px;font-size:36px;color:#fff;cursor:pointer}

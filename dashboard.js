@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!car || !modalBody) return;
 
         modalBody.innerHTML = `
-            <h2 style="color: #ffcc00; font-size: 24px; margin-bottom: 20px;">Edit: ${car.makeModel}</h2>
+            <h2 style="color: var(--gold-2); font-size: 24px; margin-bottom: 20px;">Edit: ${car.makeModel}</h2>
             <form id="editCarForm" onsubmit="window.submitEditCar(event, '${car._id}')">
                 <div class="form-group"><label>Make & Model</label><input type="text" id="editMake" value="${car.makeModel}" required></div>
                 
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 
                 <button type="submit" class="btn-primary" style="margin-top:20px;">Save Changes</button>
-                <button type="button" class="btn-primary" style="background:#444; margin-top:10px;" onclick="document.getElementById('carModal').classList.add('hidden')">Cancel</button>
+                <button type="button" class="btn-primary" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line); margin-top:10px;" onclick="document.getElementById('carModal').classList.add('hidden')">Cancel</button>
             </form>
         `;
     };
@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
             myCars.forEach(car => {
                 const card = document.createElement('div');
                 card.classList.add('car-card');
-                if(car.isFeatured) card.style.border = '1px solid #ffcc00';
+                if(car.isFeatured) card.style.border = '1px solid var(--gold)';
                 
                 const firstImg = car.images?.[0] || '';
                 const previewImg = typeof firstImg === 'string'
@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         } catch (err) {
             console.error('Database connection failed.', err);
-            carGrid.innerHTML = '<div style="padding:16px; border:1px solid #333; border-radius:8px; color:#ff7777;">Failed to load cars. Please log in again and refresh.</div>';
+            carGrid.innerHTML = '<div style="padding:16px; border:1px solid var(--line); background:var(--panel-2); border-radius:8px; color:var(--red);">Failed to load cars. Please log in again and refresh.</div>';
         }
     }
 
@@ -685,16 +685,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const imgId = isLegacy ? img : (img.publicId || '');
                 const deleteArg = imgId ? `'${imgId}'` : 'null';
                 const removeBtn = role === 'admin'
-                    ? `<button onclick="window.removeCarPhoto('${car._id}',${deleteArg},${idx})" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;z-index:2;">&times;</button>`
+                    ? `<button onclick="window.removeCarPhoto('${car._id}',${deleteArg},${idx})" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;z-index:2;">&times;</button>`
                     : '';
-                const brokenFallback = `this.onerror=null;this.style.objectFit='contain';this.style.padding='10px';this.style.background='#1a1a1a';this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23666%22 stroke-width=%221.5%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22/><circle cx=%228.5%22 cy=%228.5%22 r=%221.5%22/><path d=%22M21 15l-5-5L5 21%22/></svg>';`;
+                const brokenFallback = `this.onerror=null;this.style.objectFit='contain';this.style.padding='10px';this.style.background='var(--panel-2)';this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238A8474%22 stroke-width=%221.5%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22/><circle cx=%228.5%22 cy=%228.5%22 r=%221.5%22/><path d=%22M21 15l-5-5L5 21%22/></svg>';`;
                 galleryHtml += `<div style="position:relative;display:inline-block;margin:5px;">
                     <img src="${imgPath}" onerror="${brokenFallback}" onclick="window.openLightbox('${imgPath.replace(/'/g, "\\'")}')" style="width:100px; height:100px; object-fit:cover; border-radius:4px; cursor:zoom-in;">
                     ${removeBtn}
                 </div>`;
             });
         } else {
-            galleryHtml = '<p style="color: #888;">No photos uploaded.</p>';
+            galleryHtml = '<p style="color: var(--muted);">No photos uploaded.</p>';
         }
 
         const normalizedDealerId = String(car.dealerId || '').trim().toLowerCase();
@@ -714,45 +714,45 @@ document.addEventListener('DOMContentLoaded', function() {
                     const docId = isLegacy ? (doc.filename || '') : (doc.publicId || '');
                     const deleteArg = docId ? `'${docId}'` : 'null';
                     const removeBtn = canUploadDocs
-                        ? `<button onclick="window.deleteCarDoc('${car._id}',${deleteArg},${idx})" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;z-index:2;">&times;</button>`
+                        ? `<button onclick="window.deleteCarDoc('${car._id}',${deleteArg},${idx})" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;z-index:2;">&times;</button>`
                         : '';
                     const displayLabel = doc.title || doc.originalName || 'დოკუმენტი';
                     const editArg = docId ? `'${docId}'` : 'null';
                     const editBtn = canUploadDocs
-                        ? `<button onclick="window.editCarDocTitle('${car._id}',${editArg},${idx},'${displayLabel.replace(/'/g, "\\'")}')" title="დასახელების ცვლილება" style="position:absolute;bottom:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--gold,#C9A24A);color:#000;border:none;cursor:pointer;font-size:11px;line-height:1;z-index:2;">✎</button>`
+                        ? `<button onclick="window.editCarDocTitle('${car._id}',${editArg},${idx},'${displayLabel.replace(/'/g, "\\'")}')" title="დასახელების ცვლილება" style="position:absolute;bottom:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:#000;border:none;cursor:pointer;font-size:11px;line-height:1;z-index:2;">✎</button>`
                         : '';
                     if (IMAGE_EXT.test(doc.originalName || docPath)) {
                         docsHtml += `<div style="position:relative;text-align:center;">
                             <a href="${docPath}" target="_blank" title="${displayLabel}">
-                                <img src="${docPath}" onerror="this.onerror=null;this.style.opacity='0.3';" style="width:90px;height:90px;object-fit:cover;border-radius:4px;border:1px solid #333;">
+                                <img src="${docPath}" onerror="this.onerror=null;this.style.opacity='0.3';" style="width:90px;height:90px;object-fit:cover;border-radius:4px;border:1px solid var(--line);">
                             </a>
-                            ${doc.title ? `<div style="font-size:11px;color:#aaa;margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${doc.title}</div>` : ''}
+                            ${doc.title ? `<div style="font-size:11px;color:var(--muted);margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${doc.title}</div>` : ''}
                             ${removeBtn}
                             ${editBtn}
                         </div>`;
                     } else {
-                        docsHtml += `<div style="position:relative;display:flex;align-items:center;background:#111;border-radius:4px;padding:8px 28px 8px 10px;">
-                            <a href="${docPath}" target="_blank" style="color:#ffcc00; text-decoration:none; font-size:13px;">📄 ${displayLabel}</a>
+                        docsHtml += `<div style="position:relative;display:flex;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:8px 28px 8px 10px;">
+                            <a href="${docPath}" target="_blank" style="color:var(--gold-2); text-decoration:none; font-size:13px;">📄 ${displayLabel}</a>
                             ${removeBtn}
                             ${editBtn}
                         </div>`;
                     }
                 });
             } else {
-                docsHtml += '<p style="color: #888; font-size: 14px;">No documents.</p>';
+                docsHtml += '<p style="color: var(--muted); font-size: 14px;">No documents.</p>';
             }
             docsHtml += '</div>';
 
             const notesSection = canEditCar ? `
                 <div style="margin-top:14px;">
-                    <textarea id="carNotes-${car._id}" placeholder="შენიშვნა..." ${canUploadDocs ? '' : 'readonly'} style="width:100%; min-height:80px; background:#000; color:#fff; border:1px solid #333; padding:10px; border-radius:4px; font-family:inherit; resize:vertical;">${car.notes || ''}</textarea>
+                    <textarea id="carNotes-${car._id}" placeholder="შენიშვნა..." ${canUploadDocs ? '' : 'readonly'} style="width:100%; min-height:80px; background:var(--panel); color:var(--text); border:1px solid var(--line); padding:10px; border-radius:4px; font-family:inherit; resize:vertical;">${car.notes || ''}</textarea>
                     ${canUploadDocs ? `<button class="btn-primary" style="width:auto; padding:8px 18px; margin-top:8px;" onclick="window.saveCarNotes('${car._id}')">Save</button>` : ''}
                 </div>
             ` : '';
 
             adminTools = `
                 <div class="modal-details-box" style="margin-top: 15px;">
-                    <h3 style="color:#fff; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">Documents</h3>
+                    <h3 style="color:var(--text); margin-bottom:10px; border-bottom:1px solid var(--line); padding-bottom:5px;">Documents</h3>
                     ${docsHtml}
                     ${notesSection}
                 </div>
@@ -761,7 +761,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const editTools = role === 'admin' ? `
             <div class="modal-details-box" style="margin-top: 15px;">
-                <button class="btn-primary" style="background: #333; color: #fff;" onclick="window.showEditForm('${car._id}')">Edit Car Details</button>
+                <button class="btn-primary" onclick="window.showEditForm('${car._id}')">Edit Car Details</button>
             </div>
         ` : '';
 
@@ -769,41 +769,41 @@ document.addEventListener('DOMContentLoaded', function() {
         const leftToPay = totalCost - (car.amountPaid || 0);
 
         modalBody.innerHTML = `
-            <h2 style="color: #ffcc00; font-size: 24px; margin-bottom: 20px;">${car.makeModel}</h2>
+            <h2 style="color: var(--gold-2); font-size: 24px; margin-bottom: 20px;">${car.makeModel}</h2>
             
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                 <div class="modal-details-box">
-                    <h3 style="color:#fff; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">Financials</h3>
-                    <p style="color:#ccc; margin-bottom:5px;">Auction: $${(car.auctionPrice || 0).toLocaleString()}</p>
-                    <p style="color:#ccc; margin-bottom:5px;">Transport: $${(car.transportPrice || 0).toLocaleString()}</p>
-                    <p style="color:#ccc; margin-bottom:5px;">Paid: $${(car.amountPaid || 0).toLocaleString()}</p>
-                    <p style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #333;">Balance: <strong style="color: ${leftToPay > 0 ? '#ff4444' : '#00C851'};">$${leftToPay.toLocaleString()}</strong></p>
+                    <h3 style="color:var(--text); margin-bottom:10px; border-bottom:1px solid var(--line); padding-bottom:5px;">Financials</h3>
+                    <p style="color:var(--text); margin-bottom:5px;">Auction: $${(car.auctionPrice || 0).toLocaleString()}</p>
+                    <p style="color:var(--text); margin-bottom:5px;">Transport: $${(car.transportPrice || 0).toLocaleString()}</p>
+                    <p style="color:var(--text); margin-bottom:5px;">Paid: $${(car.amountPaid || 0).toLocaleString()}</p>
+                    <p style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); color:var(--text);">Balance: <strong style="color: ${leftToPay > 0 ? 'var(--red)' : 'var(--green)'};">$${leftToPay.toLocaleString()}</strong></p>
                 </div>
 
                 <div class="modal-details-box">
-                    <h3 style="color:#fff; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">Logistics & Info</h3>
-                    <p style="color:#ccc; margin-bottom:5px;">Date: ${car.purchaseDate || 'N/A'}</p>
-                    <p style="color:#ccc; margin-bottom:5px;">Auction: ${car.auctionName || 'N/A'}</p>
-                    <p style="color:#ccc; margin-bottom:5px;">Location: ${car.buyLocation || 'N/A'}</p>
-                    <p style="color:#ccc; margin-bottom:5px;">VIN: ${car.vin}</p>
-                    <p style="color:#ccc; margin-bottom:5px;">Lot: ${car.lotNumber || 'N/A'}</p>
-                    <p style="color:#ccc; margin-bottom:5px;">Container: ${car.containerNumber || 'N/A'}</p>
+                    <h3 style="color:var(--text); margin-bottom:10px; border-bottom:1px solid var(--line); padding-bottom:5px;">Logistics & Info</h3>
+                    <p style="color:var(--text); margin-bottom:5px;">Date: ${car.purchaseDate || 'N/A'}</p>
+                    <p style="color:var(--text); margin-bottom:5px;">Auction: ${car.auctionName || 'N/A'}</p>
+                    <p style="color:var(--text); margin-bottom:5px;">Location: ${car.buyLocation || 'N/A'}</p>
+                    <p style="color:var(--text); margin-bottom:5px;">VIN: ${car.vin}</p>
+                    <p style="color:var(--text); margin-bottom:5px;">Lot: ${car.lotNumber || 'N/A'}</p>
+                    <p style="color:var(--text); margin-bottom:5px;">Container: ${car.containerNumber || 'N/A'}</p>
                 </div>
 
                 <div class="modal-details-box">
-                    <h3 style="color:#fff; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">Recipient Details</h3>
-                    <p style="color:#ccc; margin-bottom:5px;">Name: ${car.recipientFirstName || ''} ${car.recipientLastName || ''}</p>
-                    <p style="color:#ccc; margin-bottom:5px;">ID: ${car.recipientId || 'N/A'}</p>
-                    <p style="color:#ccc; margin-bottom:5px;">Phone: ${car.recipientPhone || 'N/A'}</p>
+                    <h3 style="color:var(--text); margin-bottom:10px; border-bottom:1px solid var(--line); padding-bottom:5px;">Recipient Details</h3>
+                    <p style="color:var(--text); margin-bottom:5px;">Name: ${car.recipientFirstName || ''} ${car.recipientLastName || ''}</p>
+                    <p style="color:var(--text); margin-bottom:5px;">ID: ${car.recipientId || 'N/A'}</p>
+                    <p style="color:var(--text); margin-bottom:5px;">Phone: ${car.recipientPhone || 'N/A'}</p>
                 </div>
             </div>
-            ${car.notes ? `<p style="color:#ccc; margin-top:12px;"><strong style="color:#ffcc00;">TITLE:</strong> ${car.notes}</p>` : ''}
+            ${car.notes ? `<p style="color:var(--text); margin-top:12px;"><strong style="color:var(--gold-2);">TITLE:</strong> ${car.notes}</p>` : ''}
 
             <div class="modal-details-box" style="margin-top: 15px;">
                 <p style="display: flex; align-items: center; justify-content:space-between;">
-                    <strong style="color:#fff;">Pipeline Status:</strong>
+                    <strong style="color:var(--text);">Pipeline Status:</strong>
                     ${role === 'admin' ? `
-                    <select onchange="window.updateCarStatus('${car._id}', this.value)" style="padding:10px; background:#000; color:#fff; border:1px solid #333; border-radius:4px;">
+                    <select onchange="window.updateCarStatus('${car._id}', this.value)" style="padding:10px; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:4px;">
                         <option value="Purchased" ${car.status === 'Purchased' ? 'selected' : ''}>Purchased</option>
                         <option value="In Transit" ${car.status === 'In Transit' ? 'selected' : ''}>In Transit</option>
                         <option value="At Customs" ${car.status === 'At Customs' ? 'selected' : ''}>At Customs</option>
@@ -817,11 +817,11 @@ document.addEventListener('DOMContentLoaded', function() {
             ${adminTools}
             ${editTools}
 
-            <h3 style="margin-top: 20px; color:#fff;">Gallery</h3>
+            <h3 style="margin-top: 20px; color:var(--text);">Gallery</h3>
             <div class="modal-gallery" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">${galleryHtml}</div>
             ${role === 'admin' ? `
             <div style="display:flex; gap:10px; margin-top:14px;">
-                <input type="file" id="newPhotoFile-${car._id}" multiple accept="image/*" style="background:#000; color:#fff; border:1px solid #333; padding:10px; flex:1;">
+                <input type="file" id="newPhotoFile-${car._id}" multiple accept="image/*" style="background:var(--panel); color:var(--text); border:1px solid var(--line); padding:10px; flex:1; border-radius:4px;">
                 <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="window.uploadCarPhotos('${car._id}')">Upload</button>
             </div>
             ` : ''}
