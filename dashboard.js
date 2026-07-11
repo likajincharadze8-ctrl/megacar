@@ -743,13 +743,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             docsHtml += '</div>';
 
-            const uploadControls = canUploadDocs ? `
-                <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
-                    <input type="text" id="newDocTitle-${car._id}" placeholder="დოკუმენტის დასახელება (მაგ. ტაიტლი, ინვოისი, დაზღვევა)" style="background:#000; color:#fff; border:1px solid #333; padding:10px; border-radius:4px;">
-                    <div style="display:flex; gap:10px;">
-                        <input type="file" id="newDocFile-${car._id}" multiple style="background:#000; color:#fff; border:1px solid #333; padding:10px; flex:1;">
-                        <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="window.uploadDoc('${car._id}')">Upload</button>
-                    </div>
+            const notesSection = canEditCar ? `
+                <div style="margin-top:14px;">
+                    <textarea id="carNotes-${car._id}" placeholder="შენიშვნა..." ${canUploadDocs ? '' : 'readonly'} style="width:100%; min-height:80px; background:#000; color:#fff; border:1px solid #333; padding:10px; border-radius:4px; font-family:inherit; resize:vertical;">${car.notes || ''}</textarea>
+                    ${canUploadDocs ? `<button class="btn-primary" style="width:auto; padding:8px 18px; margin-top:8px;" onclick="window.saveCarNotes('${car._id}')">Save</button>` : ''}
                 </div>
             ` : '';
 
@@ -757,7 +754,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="modal-details-box" style="margin-top: 15px;">
                     <h3 style="color:#fff; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">Documents</h3>
                     ${docsHtml}
-                    ${uploadControls}
+                    ${notesSection}
                 </div>
             `;
         }
@@ -901,6 +898,23 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (err) {
             console.error('Document title update failed.', err);
             alert('დასახელების შენახვა ვერ მოხერხდა.');
+        }
+    };
+
+    window.saveCarNotes = async (carId) => {
+        const textarea = document.getElementById(`carNotes-${carId}`);
+        if (!textarea) return;
+        try {
+            const res = await fetch(`/api/cars/${carId}/notes`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: textarea.value })
+            });
+            if (!res.ok) { alert('შენახვა ვერ მოხერხდა.'); return; }
+            await loadCars();
+        } catch (err) {
+            console.error('Save notes failed.', err);
+            alert('შენახვა ვერ მოხერხდა.');
         }
     };
 

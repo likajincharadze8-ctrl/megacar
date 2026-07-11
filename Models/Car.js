@@ -22,6 +22,7 @@ const carSchema = new mongoose.Schema(
     images: [{ url: String, publicId: String }],
     documents: [{ originalName: String, title: String, url: String, publicId: String, resourceType: String }],
     isFeatured: { type: Boolean, default: false },
+    notes: { type: String, trim: true, default: '' },
   },
   { timestamps: true }
 );
