@@ -393,6 +393,27 @@ app.patch('/api/cars/:id/documents/remove', requireAuth, requireAdmin, async (re
     }
 });
 
+// Update just a document's title/label (admin only, no re-upload needed)
+app.patch('/api/cars/:id/documents/title', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { publicId, index, title } = req.body;
+        const car = await Car.findById(req.params.id);
+        if (!car) return res.status(404).json({ error: "Car not found" });
+
+        let doc = null;
+        if (publicId) doc = (car.documents || []).find(d => d.publicId === publicId);
+        else if (index !== undefined && index !== null) doc = car.documents[index];
+
+        if (!doc) return res.status(404).json({ error: "Document not found." });
+        doc.title = (title || '').trim();
+
+        await car.save();
+        res.json(car);
+    } catch (error) {
+        res.status(400).json({ error: "Failed to update title." });
+    }
+});
+
 // --- 8. INVOICE ROUTES ---
 
 // GET invoices: admin sees all, dealer sees only their own

@@ -717,6 +717,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         ? `<button onclick="window.deleteCarDoc('${car._id}',${deleteArg},${idx})" title="წაშლა" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#BE3B30;color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;z-index:2;">&times;</button>`
                         : '';
                     const displayLabel = doc.title || doc.originalName || 'დოკუმენტი';
+                    const editArg = docId ? `'${docId}'` : 'null';
+                    const editBtn = canUploadDocs
+                        ? `<button onclick="window.editCarDocTitle('${car._id}',${editArg},${idx},'${displayLabel.replace(/'/g, "\\'")}')" title="დასახელების ცვლილება" style="position:absolute;bottom:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--gold,#C9A24A);color:#000;border:none;cursor:pointer;font-size:11px;line-height:1;z-index:2;">✎</button>`
+                        : '';
                     if (IMAGE_EXT.test(doc.originalName || docPath)) {
                         docsHtml += `<div style="position:relative;text-align:center;">
                             <a href="${docPath}" target="_blank" title="${displayLabel}">
@@ -724,11 +728,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             </a>
                             ${doc.title ? `<div style="font-size:11px;color:#aaa;margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${doc.title}</div>` : ''}
                             ${removeBtn}
+                            ${editBtn}
                         </div>`;
                     } else {
                         docsHtml += `<div style="position:relative;display:flex;align-items:center;background:#111;border-radius:4px;padding:8px 28px 8px 10px;">
                             <a href="${docPath}" target="_blank" style="color:#ffcc00; text-decoration:none; font-size:13px;">📄 ${displayLabel}</a>
                             ${removeBtn}
+                            ${editBtn}
                         </div>`;
                     }
                 });
@@ -876,6 +882,25 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (err) {
             console.error('Document delete failed.', err);
             alert('დოკუმენტის წაშლა ვერ მოხერხდა.');
+        }
+    };
+
+    window.editCarDocTitle = async (carId, publicId, index, currentLabel) => {
+        const newTitle = prompt('დოკუმენტის დასახელება:', currentLabel || '');
+        if (newTitle === null) return; // cancelled
+        try {
+            const res = await fetch(`/api/cars/${carId}/documents/title`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ publicId, index, title: newTitle })
+            });
+            if (!res.ok) { alert('დასახელების შენახვა ვერ მოხერხდა.'); return; }
+            await loadCars();
+            const updated = window.maiCars.find(c => c._id === carId);
+            if (updated) window.openCarMenu(updated);
+        } catch (err) {
+            console.error('Document title update failed.', err);
+            alert('დასახელების შენახვა ვერ მოხერხდა.');
         }
     };
 
